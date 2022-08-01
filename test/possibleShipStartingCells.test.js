@@ -2,8 +2,12 @@ import { expect } from "chai";
 import { Battleship } from "../main.js";
 
 describe("possibleShipStartingCells method", () => {
+  let board;
+  beforeEach(() => {
+    board = new Battleship();
+  });
+
   it("should return an array", () => {
-    const board = new Battleship();
     board.initializeBoardSize(5, 5);
     board.blockedCells.push("C3");
     expect(board.possibleShipStartingCells(5, "vertical")).to.be.instanceOf(
@@ -12,7 +16,6 @@ describe("possibleShipStartingCells method", () => {
   });
 
   it("test 5x5 board with one cell blocked", () => {
-    const board = new Battleship();
     board.initializeBoardSize(5, 5);
     board.blockedCells.push("C3");
     expect(board.possibleShipStartingCells(5, "vertical")).to.deep.equal([
@@ -24,7 +27,6 @@ describe("possibleShipStartingCells method", () => {
   });
 
   it("shoud throw error if ship can't be placed", () => {
-    const board = new Battleship();
     board.initializeBoardSize(5, 5);
     expect(() => board.possibleShipStartingCells(6, "vertical")).to.throw(
       "Not enough space for a ship size"
@@ -32,7 +34,6 @@ describe("possibleShipStartingCells method", () => {
   });
 
   it("test 10x10 board with 5 cells blocked", () => {
-    const board = new Battleship();
     board.initializeBoardSize(10, 10);
     board.blockedCells.push("C3", "A5", "J4", "F10", "D2");
     expect(board.possibleShipStartingCells(5, "horizontal")).to.deep.equal([
@@ -85,7 +86,6 @@ describe("possibleShipStartingCells method", () => {
   });
 
   it("test 5x5 board with no cell blocked", () => {
-    const board = new Battleship();
     board.initializeBoardSize(5, 5);
     expect(board.possibleShipStartingCells(4, "horizontal")).to.deep.equal([
       "A1",
