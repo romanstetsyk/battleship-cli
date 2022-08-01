@@ -14,7 +14,7 @@ class Battleship {
     // Array of all ships, e.g [ ['0-0','0-1','0,2'], ['5-5','5-6'] ]
     this.allShips = [];
     // Ships that were not hit. It equals to all ships at the start of the game
-    this.availShips = [];
+    this.remainingShips = [];
     // Array of cells that your opponent missed.
     this.misses = [];
     // Array of cells that your opponent hit.
@@ -50,7 +50,7 @@ class Battleship {
     this.allCells = [];
     this.blockedCells = [];
     this.allShips = [];
-    this.availShips = [];
+    this.remainingShips = [];
     this.misses = [];
     this.hits = [];
     this.untouchedCells = [];
@@ -223,7 +223,7 @@ class Battleship {
 
   placeShipAndBlockSurroundingCells(arrayOfCells) {
     this.allShips.push([...arrayOfCells]);
-    this.availShips.push([...arrayOfCells]);
+    this.remainingShips.push([...arrayOfCells]);
     for (const cell of arrayOfCells) {
       const surroundingCells = this.getSurroundingCells(cell);
     }
@@ -318,7 +318,7 @@ class Battleship {
       });
     }
     this.allShips.push(shipCells);
-    this.availShips.push(availShipCells);
+    this.remainingShips.push(availShipCells);
     return;
   }
   // Check if the cell clicked by the opponent contains a ship
@@ -333,7 +333,7 @@ class Battleship {
       return {
         coord: null,
         moveResult: null,
-        remCellsNum: this.availShips.reduce((a, e) => a + e.length, 0),
+        remCellsNum: this.remainingShips.reduce((a, e) => a + e.length, 0),
         gameLost: this.gameLost,
       };
     }
@@ -344,7 +344,7 @@ class Battleship {
     let sinkedShip = null;
     // label statement to break out of nested loops
     // more info https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/label
-    loop1: for (let ship of this.availShips) {
+    loop1: for (let ship of this.remainingShips) {
       for (let i = 0; i < ship.length; i += 1) {
         if (ship[i] === coord) {
           this.hits.push(coord); // add coord to hits
@@ -368,7 +368,7 @@ class Battleship {
     this.untouchedCells.splice(this.untouchedCells.indexOf(coord), 1);
 
     // Number of remaining cells needed to hit to lose the game.
-    const remCellsNum = this.availShips.reduce((a, e) => a + e.length, 0);
+    const remCellsNum = this.remainingShips.reduce((a, e) => a + e.length, 0);
     this.gameLost = !Boolean(remCellsNum);
 
     return {
