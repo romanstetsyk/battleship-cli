@@ -2,6 +2,15 @@ import { expect } from "chai";
 import { Battleship } from "../main.js";
 
 describe("possibleShipStartingCells method", () => {
+  it("should return an array", () => {
+    const board = new Battleship();
+    board.initializeBoardSize(5, 5);
+    board.blockedCells.push("C3");
+    expect(board.possibleShipStartingCells(5, "vertical")).to.be.instanceOf(
+      Array
+    );
+  });
+
   it("test 5x5 board with one cell blocked", () => {
     const board = new Battleship();
     board.initializeBoardSize(5, 5);
@@ -12,6 +21,14 @@ describe("possibleShipStartingCells method", () => {
       "A4",
       "A5",
     ]);
+  });
+
+  it("shoud throw error if ship can't be placed", () => {
+    const board = new Battleship();
+    board.initializeBoardSize(5, 5);
+    expect(() => board.possibleShipStartingCells(6, "vertical")).to.throw(
+      "Not enough space for a ship size"
+    );
   });
 
   it("test 10x10 board with 5 cells blocked", () => {

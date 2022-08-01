@@ -118,7 +118,32 @@ class Battleship {
           }
       }
     }
+
+    if (!arrayOfCells.length) {
+      throw new Error(`Not enough space for a ship size ${shipSize}`);
+    }
+
     return arrayOfCells;
+  }
+  /**
+   * placeShipRandom(shipSize) {
+   *   generateValidShipCoords
+   *   placeShipBlockSurroundingCells
+   * }
+   */
+  placeShipRandomly(shipSize) {
+    const step = direction === "horizontal" ? 1 : this.width;
+
+    let direction = this.chooseRandomDirection();
+    const possibleStartingCells = this.possibleShipStartingCells(
+      shipSize,
+      direction
+    );
+    const startingCell =
+      possibleStartingCells[
+        this.randomInteger(possibleStartingCells.length - 1)
+      ];
+    const startingCellIndex = this.allCells.indexOf(startingCell);
   }
 
   // helper method for .randomBoard.
