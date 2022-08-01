@@ -1,3 +1,8 @@
+import {
+  checkIfElementsAreEqual,
+  checkIfElementsDifferByOne,
+} from "./helpers.js";
+
 class Battleship {
   constructor() {
     this.height = 0;
@@ -71,17 +76,49 @@ class Battleship {
   validateShipPlacement(shipSize, direction) {}
 
   possibleShipStartingCells(shipSize, direction) {
+    /**
+     * Loops over all cells and checks if the ship of size shipSize and at given direction
+     * can start at each cell
+     * @param integer - shipSize
+     * @param string - direction. Can be either 'horizontal' or 'vertical'
+     * @return Array of cells at which the ship can start
+     */
+
+    const arrayOfCells = [];
+
     // for horizontal cells the adjacent cells are 1 away, for vertical - the width of the board
     const step = direction === "horizontal" ? 1 : this.width;
-    // helper variables to check if subsequent horizontal and vertical elements are available
-    const [x, y] = direction === "horizontal" ? [0, 1] : [1, 0];
 
-    for (let k = 0; k < this.allCells.length; k += 1) {
-      for (let l = k; l < k + shipSize * step; l += step) {
-        let elem = [this.allCells[k].slice(0, 1), this.allCells[k].slice(1)];
-        console.log(elem);
+    outerLoop: for (let i = 0; i < this.allCells.length; i += 1) {
+      const potentialShipCells = [];
+      for (let j = i; j < i + shipSize * step; j += step) {
+        if (!this.allCells[j] || this.blockedCells.includes(this.allCells[j])) {
+          continue outerLoop;
+        }
+        potentialShipCells.push(this.allCells[j]);
+      }
+      const xCoords = potentialShipCells.map(cell => cell?.slice(0, 1));
+      const yCoords = potentialShipCells.map(cell => cell?.slice(1));
+
+      switch (direction) {
+        case "horizontal":
+          if (
+            checkIfElementsAreEqual(xCoords) &&
+            checkIfElementsDifferByOne(yCoords)
+          ) {
+            arrayOfCells.push(this.allCells[i]);
+          }
+          break;
+        case "vertical":
+          if (
+            checkIfElementsDifferByOne(xCoords) &&
+            checkIfElementsAreEqual(yCoords)
+          ) {
+            arrayOfCells.push(this.allCells[i]);
+          }
       }
     }
+    return arrayOfCells;
   }
 
   // helper method for .randomBoard.
