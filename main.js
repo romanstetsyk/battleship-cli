@@ -131,19 +131,49 @@ class Battleship {
    *   placeShipBlockSurroundingCells
    * }
    */
-  placeShipRandomly(shipSize) {
-    const step = direction === "horizontal" ? 1 : this.width;
+  generateShipCoords(shipSize, opts = {}) {
+    let direction;
+    let startingCell;
 
-    let direction = this.chooseRandomDirection();
+    if (!("direction" in opts)) {
+      direction = this.chooseRandomDirection();
+    } else {
+      direction = opts.direction;
+    }
+
     const possibleStartingCells = this.possibleShipStartingCells(
       shipSize,
       direction
     );
-    const startingCell =
-      possibleStartingCells[
-        this.randomInteger(possibleStartingCells.length - 1)
-      ];
+
+    if (!("startingCell" in opts)) {
+      startingCell =
+        possibleStartingCells[
+          this.randomInteger(possibleStartingCells.length - 1)
+        ];
+    } else {
+      startingCell = opts.startingCell;
+    }
+
+    if (!possibleStartingCells.includes(startingCell)) {
+      throw new Error("Can't place this ship here");
+    }
+
+    console.log(startingCell, direction);
+
     const startingCellIndex = this.allCells.indexOf(startingCell);
+
+    const step = direction === "horizontal" ? 1 : this.width;
+
+    const shipCoords = [];
+    for (
+      let i = startingCellIndex;
+      i < startingCellIndex + shipSize * step;
+      i += step
+    ) {
+      shipCoords.push(this.allCells[i]);
+    }
+    return shipCoords;
   }
 
   // helper method for .randomBoard.
