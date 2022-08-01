@@ -21,9 +21,17 @@ class Battleship {
   }
   // Sets the list of all cells and available cells. The size of the array is h*w
   // This is a helper method for .randomBoard method
-  #initBoardSize(h, w) {
+  initializeBoardSize(h, w) {
+    if (!Number.isInteger(h) || !Number.isInteger(w)) {
+      throw new Error("Height and width must be integers");
+    }
+    if (h < 5 || h > 25 || w < 5 || w > 25) {
+      throw new Error("Height and width must be between 5 and 25 inclusive");
+    }
+
     this.height = h;
     this.width = w;
+
     for (let i = 65; i < 65 + this.height; i += 1) {
       for (let j = 1; j <= this.width; j += 1) {
         this.allCells.push(`${String.fromCharCode(i)}${j}`);
@@ -43,7 +51,7 @@ class Battleship {
     this.untouchedCells = [];
     this.gameLost = false;
 
-    this.#initBoardSize(h, w);
+    this.initializeBoardSize(h, w);
     ArrayOfShipSizes.map(e => this.placeShip(e));
   }
 
