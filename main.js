@@ -173,6 +173,79 @@ class Battleship {
     return shipCoords;
   }
 
+  getSurroundingCells(cell, includeCorners = false) {
+    const index = this.allCells.indexOf(cell);
+
+    if (index === -1) {
+      throw new Error(
+        `Element ${cell} is out of range on a ${this.height}x${this.width} board`
+      );
+    }
+
+    // Checks if two cells are in the same rows
+    // e.g. A1 and A2 -> true, A10 and B1 - false
+    const isSameRow = (cell1, cell2) => {
+      if (cell1 === cell2 && cell1 === undefined) {
+        throw new Error("Both arguments can't be undefined");
+      }
+      return cell1?.slice(0, 1) === cell2?.slice(0, 1);
+    };
+
+    const surrondingCells = [];
+
+    const center = this.allCells[index];
+    const left = this.allCells[index - 1];
+    const right = this.allCells[index + 1];
+    const up = this.allCells[index - this.width];
+    const down = this.allCells[index + this.width];
+
+    surrondingCells.push(center);
+    if (isSameRow(left, center)) surrondingCells.push(left);
+    if (isSameRow(right, center)) surrondingCells.push(right);
+    if (up) surrondingCells.push(up);
+    if (down) surrondingCells.push(down);
+
+    if (includeCorners) {
+      const upLeft = this.allCells[index - this.width - 1];
+      const upRight = this.allCells[index - this.width + 1];
+      const downLeft = this.allCells[index + this.width - 1];
+      const downRight = this.allCells[index + this.width + 1];
+
+      if (isSameRow(left, center) && upLeft) surrondingCells.push(upLeft);
+      if (isSameRow(right, center) && upRight) surrondingCells.push(upRight);
+      if (isSameRow(left, center) && downLeft) surrondingCells.push(downLeft);
+      if (isSameRow(right, center) && downRight)
+        surrondingCells.push(downRight);
+    }
+
+    return surrondingCells;
+  }
+
+  placeShipAndBlockSurroundingCells(arrayOfCells) {
+    this.ships.push([...arrayOfCells]);
+    this.availShips.push([...arrayOfCells]);
+    for (const cell of arrayOfCells) {
+      const surroundingCells = this.getSurroundingCells(cell);
+      console.log(surroundingCells);
+    }
+  }
+
+  // [
+  //   this.allCells[i],
+  //   this.allCells[i - 1]?.split("-")[0] === this.allCells[i]?.split("-")[0]
+  //     ? this.allCells[i - 1]
+  //     : "", // check if row of the next elem in the same line
+  //   this.allCells[i + 1]?.split("-")[0] === this.allCells[i]?.split("-")[0]
+  //     ? this.allCells[i + 1]
+  //     : "",
+  //   this.allCells[i - this.width],
+  //   this.allCells[i + this.width],
+  // ].forEach(e => {
+  //   if (!this.blockedCells.includes(e)) {
+  //     this.blockedCells.push(e);
+  //   }
+  // });
+
   // helper method for .randomBoard.
   placeShip(shipSize) {
     let direction = this.chooseRandomDirection();
