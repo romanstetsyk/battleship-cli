@@ -51,6 +51,7 @@ class Board {
     /**
      * Returns the random number between 0 and upperLimit inclusive
      * rand(1) means a random number 0 or 1
+     * @param positive integer
      */
     return Math.floor(Math.random() * (upperLimit + 1));
   }
