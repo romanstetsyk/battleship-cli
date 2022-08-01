@@ -12,7 +12,7 @@ class Battleship {
     // All cells with ships in them and cells that surrond the ships
     this.blockedCells = [];
     // Array of all ships, e.g [ ['0-0','0-1','0,2'], ['5-5','5-6'] ]
-    this.ships = [];
+    this.allShips = [];
     // Ships that were not hit. It equals to all ships at the start of the game
     this.availShips = [];
     // Array of cells that your opponent missed.
@@ -49,7 +49,7 @@ class Battleship {
   randomBoard([h, w], ArrayOfShipSizes) {
     this.allCells = [];
     this.blockedCells = [];
-    this.ships = [];
+    this.allShips = [];
     this.availShips = [];
     this.misses = [];
     this.hits = [];
@@ -222,11 +222,10 @@ class Battleship {
   }
 
   placeShipAndBlockSurroundingCells(arrayOfCells) {
-    this.ships.push([...arrayOfCells]);
+    this.allShips.push([...arrayOfCells]);
     this.availShips.push([...arrayOfCells]);
     for (const cell of arrayOfCells) {
       const surroundingCells = this.getSurroundingCells(cell);
-      console.log(surroundingCells);
     }
   }
 
@@ -318,7 +317,7 @@ class Battleship {
         }
       });
     }
-    this.ships.push(shipCells);
+    this.allShips.push(shipCells);
     this.availShips.push(availShipCells);
     return;
   }
@@ -353,7 +352,7 @@ class Battleship {
           // if there are no elements in the array left, then sink is true, otherwise, hit is true
           moveResult = ship.length ? "hit" : "sink";
           if (moveResult === "sink") {
-            sinkedShip = this.ships.find(e => e.includes(coord));
+            sinkedShip = this.allShips.find(e => e.includes(coord));
           }
           break loop1;
         }

@@ -14,7 +14,7 @@ describe("Battleship class", () => {
       "width",
       "allCells",
       "blockedCells",
-      "ships",
+      "allShips",
       "availShips",
       "misses",
       "hits",
