@@ -25,8 +25,8 @@ class Battleship {
     if (!Number.isInteger(h) || !Number.isInteger(w)) {
       throw new Error("Height and width must be integers");
     }
-    if (h < 5 || h > 25 || w < 5 || w > 25) {
-      throw new Error("Height and width must be between 5 and 25 inclusive");
+    if (h < 5 || h > 26 || w < 5 || w > 26) {
+      throw new Error("Height and width must be between 5 and 26 inclusive");
     }
 
     this.height = h;
@@ -70,20 +70,23 @@ class Battleship {
 
   validateShipPlacement(shipSize, direction) {}
 
-  possibleStartingCells(shipSize, direction) {
+  possibleShipStartingCells(shipSize, direction) {
     // for horizontal cells the adjacent cells are 1 away, for vertical - the width of the board
     const step = direction === "horizontal" ? 1 : this.width;
     // helper variables to check if subsequent horizontal and vertical elements are available
     const [x, y] = direction === "horizontal" ? [0, 1] : [1, 0];
 
     for (let k = 0; k < this.allCells.length; k += 1) {
-      for (let l = k; l < k + shipSize * step; l += step) {}
+      for (let l = k; l < k + shipSize * step; l += step) {
+        let elem = [this.allCells[k].slice(0, 1), this.allCells[k].slice(1)];
+        console.log(elem);
+      }
     }
   }
 
   // helper method for .randomBoard.
   placeShip(shipSize) {
-    let direction = chooseRandomDirection();
+    let direction = this.chooseRandomDirection();
 
     const shipCells = [];
     const availShipCells = [];
