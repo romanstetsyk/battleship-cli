@@ -221,29 +221,19 @@ class Battleship {
     return surrondingCells;
   }
 
-  placeShipAndBlockSurroundingCells(arrayOfCells) {
+  placeShipAndBlockSurroundingCells(arrayOfCells, includeCorners = false) {
     this.allShips.push([...arrayOfCells]);
     this.remainingShips.push([...arrayOfCells]);
     for (const cell of arrayOfCells) {
-      const surroundingCells = this.getSurroundingCells(cell);
+      const surroundingCells = this.getSurroundingCells(cell, includeCorners);
+      surroundingCells.forEach(e => {
+        if (!this.blockedCells.includes(e)) {
+          this.blockedCells.push(e);
+        }
+      });
     }
+    console.log(this.blockedCells);
   }
-
-  // [
-  //   this.allCells[i],
-  //   this.allCells[i - 1]?.split("-")[0] === this.allCells[i]?.split("-")[0]
-  //     ? this.allCells[i - 1]
-  //     : "", // check if row of the next elem in the same line
-  //   this.allCells[i + 1]?.split("-")[0] === this.allCells[i]?.split("-")[0]
-  //     ? this.allCells[i + 1]
-  //     : "",
-  //   this.allCells[i - this.width],
-  //   this.allCells[i + this.width],
-  // ].forEach(e => {
-  //   if (!this.blockedCells.includes(e)) {
-  //     this.blockedCells.push(e);
-  //   }
-  // });
 
   // helper method for .randomBoard.
   placeShip(shipSize) {
