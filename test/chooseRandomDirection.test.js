@@ -1,7 +1,7 @@
 import { expect } from "chai";
-import { Board } from "../main.js";
+import { Battleship } from "../main.js";
 
-const board = new Board();
+const board = new Battleship();
 
 describe("chooseRandomDirection", () => {
   it("should return a string", () => {

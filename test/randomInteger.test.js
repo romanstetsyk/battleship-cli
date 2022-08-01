@@ -1,7 +1,7 @@
-import { assert, expect } from "chai";
-import { Board } from "../main.js";
+import { expect } from "chai";
+import { Battleship } from "../main.js";
 
-const board = new Board();
+const board = new Battleship();
 
 describe("randomInteger", () => {
   it("should return an integer", () => {

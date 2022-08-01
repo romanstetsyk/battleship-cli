@@ -1,4 +1,4 @@
-class Board {
+class Battleship {
   constructor() {
     this.height = 0;
     this.width = 0;
@@ -21,7 +21,7 @@ class Board {
   }
   // Sets the list of all cells and available cells. The size of the array is h*w
   // This is a helper method for .randomBoard method
-  initBoardSize(h, w) {
+  #initBoardSize(h, w) {
     this.height = h;
     this.width = w;
     for (let i = 65; i < 65 + this.height; i += 1) {
@@ -43,7 +43,7 @@ class Board {
     this.untouchedCells = [];
     this.gameLost = false;
 
-    this.initBoardSize(h, w);
+    this.#initBoardSize(h, w);
     ArrayOfShipSizes.map(e => this.placeShip(e));
   }
 
@@ -209,4 +209,4 @@ class Board {
   }
 }
 
-export { Board };
+export { Battleship };
