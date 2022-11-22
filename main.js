@@ -16,9 +16,9 @@ export class Battleship {
     // Ships that were not hit. It equals to all ships at the start of the game
     this.remainingShips = [];
     // Array of cells that your opponent missed.
-    this.misses = [];
+    this.misses = new Set();
     // Array of cells that your opponent hit.
-    this.hits = [];
+    this.hits = new Set();
     // Availale cells to make moves. Those that are not misses or hits.
     this.untouchedCells = [];
     // if gameLost is true can't make moves
@@ -54,8 +54,8 @@ export class Battleship {
     this.blockedCells = [];
     this.allShips = [];
     this.remainingShips = [];
-    this.misses = [];
-    this.hits = [];
+    this.misses = new Set();
+    this.hits = new Set();
     this.untouchedCells = [];
     this.gameLost = false;
   }
@@ -253,11 +253,7 @@ export class Battleship {
   // Update availShips, hits, misses, checks if the game is lost
   makeMove(coord) {
     // Can't make move if the game is lost or click twice on the same cell
-    if (
-      this.gameLost ||
-      this.hits.includes(coord) ||
-      this.misses.includes(coord)
-    ) {
+    if (this.gameLost || this.hits.has(coord) || this.misses.has(coord)) {
       return {
         coord: null,
         moveResult: null,
@@ -275,7 +271,7 @@ export class Battleship {
     loop1: for (let ship of this.remainingShips) {
       for (let i = 0; i < ship.length; i += 1) {
         if (ship[i] === coord) {
-          this.hits.push(coord); // add coord to hits
+          this.hits.add(coord); // add coord to hits
           ship.splice(i, 1); // remove coord from availShips
           // if there are no elements in the array left, then sink is true, otherwise, hit is true
           moveResult = ship.length ? "hit" : "sink";
@@ -289,7 +285,7 @@ export class Battleship {
 
     if (!moveResult) {
       moveResult = "miss";
-      this.misses.push(coord); // add coord to misses
+      this.misses.add(coord); // add coord to misses
     }
 
     // remove coord from untouched cells
