@@ -1,14 +1,30 @@
 import * as readline from "node:readline";
 import { Battleship } from "./main.js";
+import { program } from "commander";
 
-const width = 5;
-const height = 5;
+program.option("-s, --ships [numbers...]", "Ship sizes");
+program.parse(process.argv);
+
+const width = 10;
+const height = 10;
+
+let ships, isValidShipArray;
+if (Array.isArray(program.opts().ships)) {
+  ships = program.opts().ships.map(Number);
+  isValidShipArray = ships.every(n => Number.isInteger(n) && n > 0 && n <= 5);
+}
 
 const playerBoard = new Battleship();
 const computerBoard = new Battleship();
 
-playerBoard.randomBoard([width, height], [5]);
-computerBoard.randomBoard([width, height], [5]);
+playerBoard.randomBoard(
+  [width, height],
+  isValidShipArray ? ships : [5, 4, 3, 3, 2, 2, 2]
+);
+computerBoard.randomBoard(
+  [width, height],
+  isValidShipArray ? ships : [5, 4, 3, 3, 2, 2, 2]
+);
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -75,13 +91,17 @@ function computerMove() {
   }
 }
 
+let start = false;
 function play() {
+  start = true;
   rl.question(grid(width, height) + "\nYour move (e.g. A1) : ", answer => {
     readline.moveCursor(process.stdout, 0, -height - 2);
     readline.clearLine(process.stdout, 0);
     readline.clearScreenDown(process.stdout);
 
     if (answer === "exit") {
+      console.log("Canceled");
+      console.log(grid(width, height));
       return rl.close();
     }
 
@@ -95,6 +115,7 @@ function play() {
           computerMove();
           if (playerBoard.gameLost) {
             console.log("Comp won");
+            console.log(grid(width, height));
             return rl.close();
           }
           break;
@@ -105,6 +126,7 @@ function play() {
           console.log(`Your move: ${res.coord}. Result: ${res.moveResult}`);
           if (computerBoard.gameLost) {
             console.log("You won");
+            console.log(grid(width, height));
             return rl.close();
           }
 
@@ -117,7 +139,3 @@ function play() {
 }
 
 play();
-
-rl.on("close", () => {
-  console.log(grid(width, height));
-});
