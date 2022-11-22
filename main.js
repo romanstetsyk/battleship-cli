@@ -3,7 +3,7 @@ import {
   checkIfElementsDifferByOne,
 } from "./helpers.js";
 
-class Battleship {
+export class Battleship {
   constructor() {
     this.height = 0;
     this.width = 0;
@@ -308,5 +308,3 @@ class Battleship {
     };
   }
 }
-
-export { Battleship };

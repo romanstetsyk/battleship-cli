@@ -1,8 +1,8 @@
-const checkIfElementsAreEqual = array => {
+export const checkIfElementsAreEqual = array => {
   return array.every(e => e === array[0]);
 };
 
-const checkIfElementsDifferByOne = array => {
+export const checkIfElementsDifferByOne = array => {
   /**
    * Works for integers and letters
    */
@@ -15,5 +15,3 @@ const checkIfElementsDifferByOne = array => {
     }
   });
 };
-
-export { checkIfElementsAreEqual, checkIfElementsDifferByOne };
