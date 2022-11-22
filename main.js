@@ -46,7 +46,10 @@ class Battleship {
   }
   // Generates a random board. The array is the sizes of ships.
   // e.g. [5,4,3,3] means 1 ship of 5 squares, 1 ship of 4 squares, and 2 ships of 3 squares.
-  randomBoard([h, w], ArrayOfShipSizes) {
+
+  reset() {
+    this.height = null;
+    this.width = null;
     this.allCells = [];
     this.blockedCells = [];
     this.allShips = [];
@@ -55,9 +58,20 @@ class Battleship {
     this.hits = [];
     this.untouchedCells = [];
     this.gameLost = false;
+  }
 
-    this.initializeBoardSize(h, w);
-    ArrayOfShipSizes.map(e => this.placeShip(e));
+  randomBoard([h, w], arrayOfShipSizes) {
+    try {
+      this.reset();
+      this.initializeBoardSize(h, w);
+      arrayOfShipSizes.forEach(e => {
+        const ship = this.generateShipCoords(e);
+        this.placeShipAndBlockSurroundingCells(ship);
+      });
+    } catch (err) {
+      console.error(err);
+      this.reset();
+    }
   }
 
   randomInteger(upperLimit) {
@@ -232,85 +246,9 @@ class Battleship {
         }
       });
     }
-    console.log(this.blockedCells);
-  }
-
-  // helper method for .randomBoard.
-  placeShip(shipSize) {
-    let direction = this.chooseRandomDirection();
-
-    const shipCells = [];
-    const availShipCells = [];
-    let availCells = [];
-    let blockedCells = [];
-
-    // for horizontal cells the adjacent cells are 1 away, for vertical - the width of the board
-    const step = direction === "horizontal" ? 1 : this.width;
-    // helper variables to check if subsequent horizontal and vertical elements are available
-    const [x, y] = direction === "horizontal" ? [0, 1] : [1, 0];
-
-    // Check if there's enough space to put the ship of size 'shipSize'
-    for (let k = 0; k < this.allCells.length; k += 1) {
-      let availLength = 0;
-      let diff = 0;
-      for (let l = k; l < k + shipSize * step; l += step) {
-        // let elem = this.allCells[k].split("-").map(Number);
-        let elem = [this.allCells[k].slice(0, 1), this.allCells[k].slice(1)];
-        // let nextElem = this.allCells[l]?.split("-").map(Number);
-        let nextElem = [
-          this.allCells[l].slice(0, 1),
-          this.allCells[l].slice(1),
-        ];
-        if (
-          elem[x] === nextElem?.[x] &&
-          elem[y] === nextElem?.[y] - diff &&
-          !this.blockedCells.includes(this.allCells[l])
-        ) {
-          availLength += 1;
-        } else {
-          availLength = 0;
-          blockedCells.push(this.allCells[k]);
-          break;
-        }
-        diff += 1;
-      }
-      if (availLength === shipSize) {
-        availCells.push(this.allCells[k]);
-      }
-    }
-    // Choose ramdomly a cell from available cells to start building a ship
-    const startingCell = availCells[this.randomInteger(availCells.length - 1)];
-    const startingCellIndex = this.allCells.indexOf(startingCell);
-
-    for (
-      let i = startingCellIndex;
-      i < startingCellIndex + shipSize * step;
-      i += step
-    ) {
-      // update cells for current ship
-      shipCells.push(this.allCells[i]);
-      availShipCells.push(this.allCells[i]);
-      // Block adjacent cells
-      [
-        this.allCells[i],
-        this.allCells[i - 1]?.split("-")[0] === this.allCells[i]?.split("-")[0]
-          ? this.allCells[i - 1]
-          : "", // check if row of the next elem in the same line
-        this.allCells[i + 1]?.split("-")[0] === this.allCells[i]?.split("-")[0]
-          ? this.allCells[i + 1]
-          : "",
-        this.allCells[i - this.width],
-        this.allCells[i + this.width],
-      ].forEach(e => {
-        if (!this.blockedCells.includes(e)) {
-          this.blockedCells.push(e);
-        }
-      });
-    }
-    this.allShips.push(shipCells);
-    this.remainingShips.push(availShipCells);
     return;
   }
+
   // Check if the cell clicked by the opponent contains a ship
   // Update availShips, hits, misses, checks if the game is lost
   makeMove(coord) {
