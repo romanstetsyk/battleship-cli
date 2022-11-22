@@ -86,7 +86,7 @@ const grid = function (width, height) {
 
   rows = rows.join(" \n");
 
-  return players + "\n" + headerRow + "\n" + rows;
+  return "\n" + players + "\n" + headerRow + "\n" + rows + "\n";
 };
 
 function computerMove() {
@@ -119,7 +119,7 @@ let start = false;
 function play() {
   start = true;
   rl.question(grid(width, height) + "\nYour move (e.g. A1) : ", answer => {
-    readline.moveCursor(process.stdout, 0, -height - 3);
+    readline.moveCursor(process.stdout, 0, -height - 5);
     readline.clearLine(process.stdout, 0);
     readline.clearScreenDown(process.stdout);
 
