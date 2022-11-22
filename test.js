@@ -19,8 +19,6 @@ const endGame = () => new Promise((res, rej) => res(1));
 
 let n = 5;
 
-const myMoves = {};
-
 const grid = function (width, height) {
   const spacing = "    ";
   const header = Array.from({ length: width }, (_, i) => {
@@ -33,9 +31,6 @@ const grid = function (width, height) {
     let computerRow = [i.toString().padStart(2, " ")];
     for (let j = 65; j < 65 + width; j += 1) {
       const coord = `${String.fromCharCode(j)}${i}`;
-      if (!myMoves.hasOwnProperty(`${String.fromCharCode(j)}${i}`)) {
-        myMoves[`${String.fromCharCode(j)}${i}`] = ".";
-      }
       if (computerBoard.hits.has(coord)) {
         computerRow.push("x");
       } else if (computerBoard.misses.has(coord)) {
@@ -47,12 +42,15 @@ const grid = function (width, height) {
 
     let playerRow = [i.toString().padStart(2, " ")];
     for (let j = 65; j < 65 + width; j += 1) {
-      if (!myMoves.hasOwnProperty(`${String.fromCharCode(j)}${i}`)) {
-        myMoves[`${String.fromCharCode(j)}${i}`] = ".";
-      }
-      playerRow.push(myMoves[`${String.fromCharCode(j)}${i}`]);
+      const coord = `${String.fromCharCode(j)}${i}`;
+      let isShip = false;
+      playerBoard.allShips.forEach(ship => {
+        if (ship.has(coord)) isShip = true;
+      });
+      playerRow.push(isShip ? "*" : " ");
     }
-    const gameRow = computerRow.join(" ") + spacing + computerRow.join(" ");
+
+    const gameRow = computerRow.join(" ") + spacing + playerRow.join(" ");
     rows.push(gameRow);
   }
 
@@ -68,9 +66,7 @@ function move() {
     readline.clearScreenDown();
     console.log(answer);
 
-    myMoves[answer] = "x";
-
-    computerBoard.makeMove("A3");
+    computerBoard.makeMove(answer);
 
     if (n === 0) {
       endGame().finally(() => rl.close());
