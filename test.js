@@ -61,8 +61,8 @@ const grid = function (width, height) {
 
 function move() {
   rl.question(grid(width, height) + "\nYour move (e.g. A1) : ", answer => {
-    // readline.moveCursor(process.stdout, 0, -26);
-    readline.clearLine();
+    readline.moveCursor(process.stdout, 0, -height - 2);
+    readline.clearLine(process.stdout, 0);
     readline.clearScreenDown();
     console.log(answer);
 
