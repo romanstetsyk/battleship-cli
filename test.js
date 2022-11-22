@@ -1,23 +1,19 @@
 import * as readline from "node:readline";
 import { Battleship } from "./main.js";
 
-const width = 10;
-const height = 8;
+const width = 5;
+const height = 5;
 
 const playerBoard = new Battleship();
 const computerBoard = new Battleship();
 
-playerBoard.randomBoard([width, height], [5, 4, 3]);
-computerBoard.randomBoard([width, height], [5, 4, 3]);
+playerBoard.randomBoard([width, height], [5]);
+computerBoard.randomBoard([width, height], [5]);
 
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
 });
-
-const endGame = () => new Promise((res, rej) => res(1));
-
-let n = 5;
 
 const grid = function (width, height) {
   const spacing = "    ";
@@ -59,21 +55,69 @@ const grid = function (width, height) {
   return headerRow + "\n" + rows;
 };
 
-function move() {
+function computerMove() {
+  let randNum = Math.floor(Math.random() * playerBoard.untouchedCells.length);
+
+  while (true) {
+    let res = playerBoard.makeMove(playerBoard.untouchedCells[randNum]);
+    switch (res.moveResult) {
+      case "miss":
+        console.log(`Comp move: ${res.coord}. Result: ${res.moveResult}`);
+        return;
+      case "hit":
+        console.log(`Comp move: ${res.coord}. Result: ${res.moveResult}`);
+        break;
+      case "sink":
+        console.log(`Comp move: ${res.coord}. Result: ${res.moveResult}`);
+        if (playerBoard.gameLost) return;
+        break;
+    }
+  }
+}
+
+function play() {
   rl.question(grid(width, height) + "\nYour move (e.g. A1) : ", answer => {
     readline.moveCursor(process.stdout, 0, -height - 2);
     readline.clearLine(process.stdout, 0);
-    readline.clearScreenDown();
-    console.log(answer);
+    readline.clearScreenDown(process.stdout);
 
-    computerBoard.makeMove(answer);
-
-    if (n === 0) {
-      endGame().finally(() => rl.close());
+    if (answer === "exit") {
+      return rl.close();
     }
-    n--;
-    move();
+
+    if (!computerBoard.allCells.includes(answer.toUpperCase())) {
+      console.log(`Your move: ${answer}. No such square. Try again`);
+    } else {
+      const res = computerBoard.makeMove(answer.toUpperCase());
+      switch (res.moveResult) {
+        case "miss":
+          console.log(`Your move: ${res.coord}. Result: ${res.moveResult}`);
+          computerMove();
+          if (playerBoard.gameLost) {
+            console.log("Comp won");
+            return rl.close();
+          }
+          break;
+        case "hit":
+          console.log(`Your move: ${res.coord}. Result: ${res.moveResult}`);
+          break;
+        case "sink":
+          console.log(`Your move: ${res.coord}. Result: ${res.moveResult}`);
+          if (computerBoard.gameLost) {
+            console.log("You won");
+            return rl.close();
+          }
+
+          break;
+      }
+    }
+
+    play();
   });
 }
 
-move();
+play();
+
+rl.on("close", () => {
+  console.log(grid(width, height));
+});
