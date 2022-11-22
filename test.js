@@ -44,9 +44,9 @@ const grid = function (width, height) {
     for (let j = 65; j < 65 + width; j += 1) {
       const coord = `${String.fromCharCode(j)}${i}`;
       if (computerBoard.hits.has(coord)) {
-        computerRow.push("x");
+        computerRow.push("\x1b[31mx\x1b[0m");
       } else if (computerBoard.misses.has(coord)) {
-        computerRow.push(".");
+        computerRow.push("⋅");
       } else {
         computerRow.push(" ");
       }
@@ -55,11 +55,23 @@ const grid = function (width, height) {
     let playerRow = [i.toString().padStart(2, " ")];
     for (let j = 65; j < 65 + width; j += 1) {
       const coord = `${String.fromCharCode(j)}${i}`;
-      let isShip = false;
-      playerBoard.allShips.forEach(ship => {
-        if (ship.has(coord)) isShip = true;
-      });
-      playerRow.push(isShip ? "*" : " ");
+
+      const isShip = coord => {
+        for (const ship of playerBoard.allShips) {
+          if (ship.has(coord)) return true;
+        }
+        return false;
+      };
+
+      if (playerBoard.hits.has(coord)) {
+        playerRow.push("\x1b[31mx\x1b[0m");
+      } else if (isShip(coord)) {
+        playerRow.push("*");
+      } else if (playerBoard.misses.has(coord)) {
+        playerRow.push("⋅");
+      } else {
+        playerRow.push(" ");
+      }
     }
 
     const gameRow = computerRow.join(" ") + spacing + playerRow.join(" ");
@@ -78,13 +90,19 @@ function computerMove() {
     let res = playerBoard.makeMove(playerBoard.untouchedCells[randNum]);
     switch (res.moveResult) {
       case "miss":
-        console.log(`Comp move: ${res.coord}. Result: ${res.moveResult}`);
+        console.log(
+          `\x1b[2mComputer's move: ${res.coord}. Result: ${res.moveResult}\x1b[0m`
+        );
         return;
       case "hit":
-        console.log(`Comp move: ${res.coord}. Result: ${res.moveResult}`);
+        console.log(
+          `\x1b[2mComputer's move: ${res.coord}. Result: ${res.moveResult}\x1b[0m`
+        );
         break;
       case "sink":
-        console.log(`Comp move: ${res.coord}. Result: ${res.moveResult}`);
+        console.log(
+          `\x1b[2mComputer's move: ${res.coord}. Result: ${res.moveResult}\x1b[0m`
+        );
         if (playerBoard.gameLost) return;
         break;
     }
@@ -111,7 +129,9 @@ function play() {
       const res = computerBoard.makeMove(answer.toUpperCase());
       switch (res.moveResult) {
         case "miss":
-          console.log(`Your move: ${res.coord}. Result: ${res.moveResult}`);
+          console.log(
+            `\x1b[2mYour move: ${res.coord}. Result: ${res.moveResult}\x1b[0m`
+          );
           computerMove();
           if (playerBoard.gameLost) {
             console.log("Comp won");
@@ -120,10 +140,14 @@ function play() {
           }
           break;
         case "hit":
-          console.log(`Your move: ${res.coord}. Result: ${res.moveResult}`);
+          console.log(
+            `\x1b[2mYour move: ${res.coord}. Result: ${res.moveResult}\x1b[0m`
+          );
           break;
         case "sink":
-          console.log(`Your move: ${res.coord}. Result: ${res.moveResult}`);
+          console.log(
+            `\x1b[2mYour move: ${res.coord}. Result: ${res.moveResult}\x1b[0m`
+          );
           if (computerBoard.gameLost) {
             console.log("You won");
             console.log(grid(width, height));
