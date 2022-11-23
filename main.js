@@ -1,6 +1,7 @@
 import {
   checkIfElementsAreEqual,
   checkIfElementsDifferByOne,
+  randomInteger,
 } from "./helpers.js";
 
 export class Battleship {
@@ -74,17 +75,8 @@ export class Battleship {
     }
   }
 
-  randomInteger(upperLimit) {
-    /**
-     * Returns a random number between 0 and upperLimit inclusive
-     * @param number upperLimit - positive integer
-     * @return number - a random number between 0 and upperLimit inclusive
-     */
-    return Math.floor(Math.random() * (upperLimit + 1));
-  }
-
   chooseRandomDirection() {
-    return this.randomInteger(1) ? "horizontal" : "vertical";
+    return randomInteger(1) ? "horizontal" : "vertical";
   }
 
   possibleShipStartingCells(shipSize, direction) {
@@ -163,7 +155,7 @@ export class Battleship {
       "startingCell" in opts
         ? opts.startingCell
         : possibleStartingCells[
-            this.randomInteger(possibleStartingCells.length - 1)
+            randomInteger(possibleStartingCells.length - 1)
           ];
 
     if (!possibleStartingCells.includes(startingCell)) {

@@ -15,3 +15,12 @@ export const checkIfElementsDifferByOne = array => {
     }
   });
 };
+
+export const randomInteger = upperLimit => {
+  /**
+   * Returns a random number between 0 and upperLimit inclusive
+   * @param number upperLimit - positive integer
+   * @return number - a random number between 0 and upperLimit inclusive
+   */
+  return Math.floor(Math.random() * (upperLimit + 1));
+};
