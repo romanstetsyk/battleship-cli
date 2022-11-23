@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Battleship } from "../main.js";
+import { Battleship } from "../core.js";
 import { randomInteger } from "../helpers.js";
 
 describe("randomInteger", () => {

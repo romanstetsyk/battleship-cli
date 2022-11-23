@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Battleship } from "../main.js";
+import { Battleship } from "../core.js";
 
 describe("initializeBoardSize(h, w)", () => {
   const minDimention = 5;
