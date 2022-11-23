@@ -24,3 +24,7 @@ export const randomInteger = upperLimit => {
    */
   return Math.floor(Math.random() * (upperLimit + 1));
 };
+
+export const chooseRandomDirection = () => {
+  return randomInteger(1) ? "horizontal" : "vertical";
+};

@@ -2,6 +2,7 @@ import {
   checkIfElementsAreEqual,
   checkIfElementsDifferByOne,
   randomInteger,
+  chooseRandomDirection,
 } from "./helpers.js";
 
 export class Battleship {
@@ -75,10 +76,6 @@ export class Battleship {
     }
   }
 
-  chooseRandomDirection() {
-    return randomInteger(1) ? "horizontal" : "vertical";
-  }
-
   possibleShipStartingCells(shipSize, direction) {
     /**
      * Loops over all cells and checks if the ship of size shipSize and at given direction
@@ -142,8 +139,7 @@ export class Battleship {
     let direction;
     let startingCell;
 
-    direction =
-      "direction" in opts ? opts.direction : this.chooseRandomDirection();
+    direction = "direction" in opts ? opts.direction : chooseRandomDirection();
 
     const possibleStartingCells = this.possibleShipStartingCells(
       shipSize,
