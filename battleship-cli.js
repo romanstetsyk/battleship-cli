@@ -1,5 +1,5 @@
 import * as readline from "node:readline";
-import { Battleship } from "./main.js";
+import { Battleship } from "./core.js";
 import { program } from "commander";
 
 program.option("-s, --ships [numbers...]", "Ship sizes");
@@ -90,9 +90,8 @@ const grid = function (width, height) {
 };
 
 function computerMove() {
-  let randNum = Math.floor(Math.random() * playerBoard.untouchedCells.length);
-
   while (true) {
+    let randNum = Math.floor(Math.random() * playerBoard.untouchedCells.length);
     let res = playerBoard.makeMove(playerBoard.untouchedCells[randNum]);
     switch (res.moveResult) {
       case "miss":
@@ -124,13 +123,15 @@ function play() {
     readline.clearScreenDown(process.stdout);
 
     if (answer === "exit") {
-      console.log("Canceled");
+      console.log("\x1b[2mGame interrupted\x1b[0m");
       console.log(grid(width, height));
       return rl.close();
     }
 
     if (!computerBoard.allCells.includes(answer.toUpperCase())) {
-      console.log(`Your move: ${answer}. No such square. Try again`);
+      console.log(
+        `\x1b[2mYour move: ${answer}. No such square. Try again\x1b[0m`
+      );
     } else {
       const res = computerBoard.makeMove(answer.toUpperCase());
       switch (res.moveResult) {
@@ -140,7 +141,7 @@ function play() {
           );
           computerMove();
           if (playerBoard.gameLost) {
-            console.log("Comp won");
+            console.log("\x1b[2mComputer won!\x1b[0m");
             console.log(grid(width, height));
             return rl.close();
           }
@@ -155,7 +156,7 @@ function play() {
             `\x1b[2mYour move: ${res.coord}. Result: ${res.moveResult}\x1b[0m`
           );
           if (computerBoard.gameLost) {
-            console.log("You won");
+            console.log("\x1b[2mYou won!\x1b[0m");
             console.log(grid(width, height));
             return rl.close();
           }
