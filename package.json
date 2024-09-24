@@ -4,16 +4,26 @@
   "description": "",
   "main": "battleship-cli.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "typecheck": "tsc --build ./tsconfig.json",
+    "node:watch": "TSX_TSCONFIG_PATH=./tsconfig.json node --import tsx --watch --watch-preserve-output src/battleship-cli.ts",
+    "build:dev": "tsc --build ./tsconfig.json",
+    "build:dev:watch": "npm run build:dev -- --watch --preserveWatchOutput",
+    "prestart:dev": "npm run build:dev",
+    "start:dev": "concurrently --raw --kill-others --group \"npm run build:dev:watch\" \"npm run node:watch\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "devDependencies": {
+    "@types/node": "^22.6.1",
     "chai": "^4.3.6",
+    "concurrently": "^9.0.1",
     "mocha": "^10.0.0",
-    "prettier": "^2.7.1"
+    "prettier": "^2.7.1",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2"
   },
   "dependencies": {
     "commander": "^9.4.1",

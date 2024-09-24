@@ -1,0 +1,317 @@
+import {
+  checkIfElementsAreEqual,
+  checkIfElementsDifferByOne,
+  randomInteger,
+  chooseRandomDirection,
+} from "./helpers.js";
+import type { Ship, Cell, Direction, MoveResult } from "./types.js";
+
+export class Battleship {
+  private height = 0;
+  private width = 0;
+  public allCells: Cell[] = [];
+  private blockedCells: Cell[] = [];
+  public untouchedCells: Cell[] = [];
+  public allShips: Ship[] = [];
+  private remainingShips: Ship[] = [];
+  public hits = new Set<Cell>();
+  public misses = new Set<Cell>();
+  public gameLost = false;
+
+  constructor() {
+    // All cells. for a 10x10 board there are 100 cells
+    this.allCells = [];
+    // All cells with ships in them and cells that surrond the ships
+    this.blockedCells = [];
+    // Array of all ships, e.g [ ['0-0','0-1','0,2'], ['5-5','5-6'] ]
+    this.allShips = [];
+    // Ships that were not hit. It equals to all ships at the start of the game
+    this.remainingShips = [];
+    // Array of cells that your opponent missed.
+    this.misses = new Set();
+    // Array of cells that your opponent hit.
+    this.hits = new Set();
+    // Availale cells to make moves. Those that are not misses or hits.
+    this.untouchedCells = [];
+    // if gameLost is true can't make moves
+    this.gameLost = false;
+  }
+  /**
+   * Sets the list of all cells and available cells. The size of the array is h*w
+   * This is a helper method for this.randomBoard method
+   */
+  initializeBoardSize(h: number, w: number) {
+    if (!Number.isInteger(h) || !Number.isInteger(w)) {
+      throw new Error("Height and width must be integers");
+    }
+    if (h < 5 || h > 26 || w < 5 || w > 26) {
+      throw new Error("Height and width must be between 5 and 26 inclusive");
+    }
+
+    this.height = h;
+    this.width = w;
+
+    for (let i = 65; i < 65 + this.height; i += 1) {
+      for (let j = 1; j <= this.width; j += 1) {
+        const cell: Cell = `${String.fromCharCode(i)}${j}`;
+        this.allCells.push(cell);
+        this.untouchedCells.push(cell);
+      }
+    }
+  }
+  // Generates a random board. The array is the sizes of ships.
+  // e.g. [5,4,3,3] means 1 ship of 5 squares, 1 ship of 4 squares, and 2 ships of 3 squares.
+  reset() {
+    this.height = 0;
+    this.width = 0;
+    this.allCells = [];
+    this.blockedCells = [];
+    this.allShips = [];
+    this.remainingShips = [];
+    this.misses = new Set();
+    this.hits = new Set();
+    this.untouchedCells = [];
+    this.gameLost = false;
+  }
+
+  randomBoard([h, w]: [number, number], arrayOfShipSizes: number[]) {
+    try {
+      this.reset();
+      this.initializeBoardSize(h, w);
+      arrayOfShipSizes.forEach((e) => {
+        const ship = this.generateShipCoords(e);
+        this.placeShipAndBlockSurroundingCells(ship);
+      });
+    } catch (err) {
+      console.error(err);
+      this.reset();
+    }
+  }
+
+  /**
+   * Loops over all cells and checks if the ship of size shipSize and at given direction
+   * can start at each cell
+   * @param integer - shipSize
+   * @param string - direction. Can be either 'horizontal' or 'vertical'
+   * @return Array of cells at which the ship can start
+   */
+  possibleShipStartingCells(shipSize: number, direction: Direction): Cell[] {
+    const arrayOfCells: Cell[] = [];
+
+    // for horizontal cells the adjacent cells are 1 away, for vertical - the width of the board
+    const step = direction === "horizontal" ? 1 : this.width;
+
+    outerLoop: for (let i = 0; i < this.allCells.length; i += 1) {
+      const extractedCell = this.allCells[i];
+      if (!extractedCell) {
+        throw new Error("No cell");
+      }
+      const potentialShipCells: Cell[] = [];
+      for (let j = i; j < i + shipSize * step; j += step) {
+        const cell = this.allCells[j];
+        if (!cell || this.blockedCells.includes(cell)) {
+          continue outerLoop;
+        }
+        potentialShipCells.push(cell);
+      }
+      const xCoords = potentialShipCells.map((cell) => cell.slice(0, 1));
+      const yCoords = potentialShipCells.map((cell) => cell.slice(1));
+
+      switch (direction) {
+        case "horizontal":
+          if (
+            checkIfElementsAreEqual(xCoords) &&
+            checkIfElementsDifferByOne(yCoords)
+          ) {
+            arrayOfCells.push(extractedCell);
+          }
+          break;
+        case "vertical":
+          if (
+            checkIfElementsDifferByOne(xCoords) &&
+            checkIfElementsAreEqual(yCoords)
+          ) {
+            arrayOfCells.push(extractedCell);
+          }
+      }
+    }
+
+    if (!arrayOfCells.length) {
+      throw new Error(`Not enough space for a ship size ${shipSize}`);
+    }
+
+    return arrayOfCells;
+  }
+
+  /**
+   * Generates an array of coordinates for a ship
+   * @param integer - shipSize
+   * @param dictionary - opts. Can contain properties 'direction' and 'startingCell'
+   * if 'direction' and 'startingCell' in opts are not given, they are randomly generated by the function
+   * @return Set of coordinates. e.g. Set('A1','A2','A3')
+   */
+  generateShipCoords(
+    shipSize: number,
+    opts: { direction?: Direction; startingCell?: Cell } = {}
+  ): Ship {
+    const direction = opts.direction ?? chooseRandomDirection();
+    const possibleStartingCells = this.possibleShipStartingCells(
+      shipSize,
+      direction
+    );
+
+    // if no opts.startingCell is given, it is randomly chosen from possibleStartingCells
+    const startingCell =
+      opts.startingCell ??
+      possibleStartingCells[randomInteger(possibleStartingCells.length - 1)];
+    if (!startingCell) {
+      throw new Error("Indes out of range");
+    }
+    if (!possibleStartingCells.includes(startingCell)) {
+      throw new Error("Can't place this ship here");
+    }
+
+    const startingCellIndex = this.allCells.indexOf(startingCell);
+    if (startingCellIndex === -1) {
+      throw new Error("startingCellIndex not found");
+    }
+
+    const step = direction === "horizontal" ? 1 : this.width;
+
+    const shipCoords: Ship = new Set<Cell>();
+
+    for (
+      let i = startingCellIndex;
+      i < startingCellIndex + shipSize * step;
+      i += step
+    ) {
+      const cell = this.allCells[i];
+      if (!cell) {
+        throw new Error("No such cell");
+      }
+      shipCoords.add(cell);
+    }
+
+    return shipCoords;
+  }
+
+  getSurroundingCells(cell: Cell, includeCorners = false) {
+    const index = this.allCells.indexOf(cell);
+
+    if (index === -1) {
+      throw new Error(
+        `Element ${cell} is out of range on a ${this.height}x${this.width} board`
+      );
+    }
+
+    // Checks if two cells are in the same rows
+    // e.g. A1 and A2 -> true, A10 and B1 - false
+    const isSameRow = (cell1: Cell | undefined, cell2: Cell | undefined) => {
+      if (cell1 === cell2 && cell1 === undefined) {
+        throw new Error("Both arguments can't be undefined");
+      }
+      return cell1?.slice(0, 1) === cell2?.slice(0, 1);
+    };
+
+    const surrondingCells: Cell[] = [];
+
+    const center = this.allCells[index];
+    if (!center) throw new Error("cell should exist");
+    const left = this.allCells[index - 1];
+    const right = this.allCells[index + 1];
+    const up = this.allCells[index - this.width];
+    const down = this.allCells[index + this.width];
+
+    surrondingCells.push(center);
+    if (left && isSameRow(left, center)) surrondingCells.push(left);
+    if (right && isSameRow(right, center)) surrondingCells.push(right);
+    if (up) surrondingCells.push(up);
+    if (down) surrondingCells.push(down);
+
+    if (includeCorners) {
+      const upLeft = this.allCells[index - this.width - 1];
+      const upRight = this.allCells[index - this.width + 1];
+      const downLeft = this.allCells[index + this.width - 1];
+      const downRight = this.allCells[index + this.width + 1];
+
+      if (isSameRow(left, center) && upLeft) surrondingCells.push(upLeft);
+      if (isSameRow(right, center) && upRight) surrondingCells.push(upRight);
+      if (isSameRow(left, center) && downLeft) surrondingCells.push(downLeft);
+      if (isSameRow(right, center) && downRight)
+        surrondingCells.push(downRight);
+    }
+
+    return surrondingCells;
+  }
+
+  placeShipAndBlockSurroundingCells(
+    setOfCells: Set<Cell>,
+    includeCorners = false
+  ): void {
+    this.allShips.push(new Set(setOfCells));
+    this.remainingShips.push(new Set(setOfCells));
+    for (const cell of setOfCells) {
+      const surroundingCells = this.getSurroundingCells(cell, includeCorners);
+      surroundingCells.forEach((e) => {
+        if (!this.blockedCells.includes(e)) {
+          this.blockedCells.push(e);
+        }
+      });
+    }
+  }
+
+  // Check if the cell clicked by the opponent contains a ship
+  // Update availShips, hits, misses, checks if the game is lost
+  makeMove(coord: Cell) {
+    // Can't make move if the game is lost or click twice on the same cell
+    if (this.gameLost || this.hits.has(coord) || this.misses.has(coord)) {
+      return {
+        coord: null,
+        moveResult: null,
+        remCellsNum: this.remainingShips.reduce((a, e) => a + e.size, 0),
+        gameLost: this.gameLost,
+      };
+    }
+
+    // Check each ship for the coordinate.
+    // if found update the hits, if not found update the misses
+    let moveResult: MoveResult | undefined;
+    let sinkedShip: Ship | undefined;
+    // label statement to break out of nested loops
+    // more info https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/label
+    loop1: for (const ship of this.remainingShips) {
+      for (const shipCell of ship) {
+        if (shipCell === coord) {
+          this.hits.add(coord); // add coord to hits
+          ship.delete(shipCell); // remove coord from remainingShips
+          // if there are no elements in the array left, then sink is true, otherwise, hit is true
+          moveResult = ship.size ? "hit" : "sink";
+          if (moveResult === "sink") {
+            sinkedShip = this.allShips.find((e) => e.has(coord));
+          }
+          break loop1;
+        }
+      }
+    }
+
+    if (!moveResult) {
+      moveResult = "miss";
+      this.misses.add(coord); // add coord to misses
+    }
+
+    // remove coord from untouched cells
+    this.untouchedCells.splice(this.untouchedCells.indexOf(coord), 1);
+
+    // Number of remaining cells needed to hit to lose the game.
+    const remCellsNum = this.remainingShips.reduce((a, e) => a + e.size, 0);
+    this.gameLost = remCellsNum === 0;
+
+    return {
+      coord,
+      moveResult,
+      remCellsNum,
+      gameLost: this.gameLost,
+      sinkedShip,
+    };
+  }
+}
