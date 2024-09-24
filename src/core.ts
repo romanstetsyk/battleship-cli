@@ -6,7 +6,7 @@ import {
   getRowLetter,
 } from "./helpers.js";
 import type { Ship, Cell, Direction } from "./types.js";
-import { MoveResult } from "./types.js";
+import { MoveResult, Position } from "./types.js";
 
 export class Battleship {
   private height = 0;
@@ -118,8 +118,8 @@ export class Battleship {
         }
         potentialShipCells.push(cell);
       }
-      const xCoords = potentialShipCells.map((cell) => cell.slice(0, 1));
-      const yCoords = potentialShipCells.map((cell) => cell.slice(1));
+      const xCoords = potentialShipCells.map((cell) => this.getX(cell));
+      const yCoords = potentialShipCells.map((cell) => this.getY(cell));
 
       switch (direction) {
         case "horizontal":
@@ -199,7 +199,18 @@ export class Battleship {
     return shipCoords;
   }
 
-  getSurroundingCells(cell: Cell, includeCorners = false) {
+  getX(cell: Cell): string {
+    return cell.slice(0, 1);
+  }
+
+  getY(cell: Cell): string {
+    return cell.slice(1);
+  }
+
+  getSurroundingCells(
+    cell: Cell,
+    includeCornerCells = false
+  ): Map<Position, Cell> {
     const index = this.allCells.indexOf(cell);
 
     if (index === -1) {
@@ -208,41 +219,83 @@ export class Battleship {
       );
     }
 
-    // Checks if two cells are in the same rows
-    // e.g. A1 and A2 -> true, A10 and B1 - false
-    const isSameRow = (cell1: Cell | undefined, cell2: Cell | undefined) => {
-      if (cell1 === cell2 && cell1 === undefined) {
-        throw new Error("Both arguments can't be undefined");
-      }
-      return cell1?.slice(0, 1) === cell2?.slice(0, 1);
+    // e.g. A1 and A2 -> true, A10 and B1 -> false
+    const isSameCol = (cell1: Cell, cell2: Cell) => {
+      return this.getX(cell1) === this.getX(cell2);
     };
 
-    const surrondingCells: Cell[] = [];
+    // e.g. A1 and A2 -> false, B2 and C2 -> true
+    const isSameRow = (cell1: Cell, cell2: Cell) => {
+      return this.getY(cell1) === this.getY(cell2);
+    };
+
+    const surrondingCells: Map<Position, Cell> = new Map();
 
     const center = this.allCells[index];
-    if (!center) throw new Error("cell should exist");
-    const left = this.allCells[index - 1];
-    const right = this.allCells[index + 1];
-    const up = this.allCells[index - this.width];
-    const down = this.allCells[index + this.width];
+    if (!center) {
+      throw new Error("cell should exist");
+    }
+    const up = this.allCells[index - 1];
+    const down = this.allCells[index + 1];
+    const left = this.allCells[index - this.width];
+    const right = this.allCells[index + this.width];
 
-    surrondingCells.push(center);
-    if (left && isSameRow(left, center)) surrondingCells.push(left);
-    if (right && isSameRow(right, center)) surrondingCells.push(right);
-    if (up) surrondingCells.push(up);
-    if (down) surrondingCells.push(down);
+    surrondingCells.set(Position.CENTER, center);
+    if (left && isSameRow(left, center)) {
+      surrondingCells.set(Position.LEFT, left);
+    }
+    if (right && isSameRow(right, center)) {
+      surrondingCells.set(Position.RIGHT, right);
+    }
+    if (up && isSameCol(up, center)) {
+      surrondingCells.set(Position.UP, up);
+    }
+    if (down && isSameCol(down, center)) {
+      surrondingCells.set(Position.DOWN, down);
+    }
 
-    if (includeCorners) {
+    if (includeCornerCells) {
       const upLeft = this.allCells[index - this.width - 1];
-      const upRight = this.allCells[index - this.width + 1];
-      const downLeft = this.allCells[index + this.width - 1];
+      const downLeft = this.allCells[index - this.width + 1];
+      const upRight = this.allCells[index + this.width - 1];
       const downRight = this.allCells[index + this.width + 1];
 
-      if (isSameRow(left, center) && upLeft) surrondingCells.push(upLeft);
-      if (isSameRow(right, center) && upRight) surrondingCells.push(upRight);
-      if (isSameRow(left, center) && downLeft) surrondingCells.push(downLeft);
-      if (isSameRow(right, center) && downRight)
-        surrondingCells.push(downRight);
+      if (
+        upLeft &&
+        left &&
+        isSameRow(left, center) &&
+        up &&
+        isSameCol(up, center)
+      ) {
+        surrondingCells.set(Position.UPLEFT, upLeft);
+      }
+      if (
+        upRight &&
+        right &&
+        isSameRow(right, center) &&
+        up &&
+        isSameCol(up, center)
+      ) {
+        surrondingCells.set(Position.UPRIGHT, upRight);
+      }
+      if (
+        downLeft &&
+        left &&
+        isSameRow(left, center) &&
+        down &&
+        isSameCol(down, center)
+      ) {
+        surrondingCells.set(Position.DOWNLEFT, downLeft);
+      }
+      if (
+        downRight &&
+        right &&
+        isSameRow(right, center) &&
+        down &&
+        isSameCol(down, center)
+      ) {
+        surrondingCells.set(Position.DOWNRIGHT, downRight);
+      }
     }
 
     return surrondingCells;
