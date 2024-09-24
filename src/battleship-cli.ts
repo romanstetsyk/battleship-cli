@@ -102,17 +102,17 @@ function computerMove() {
     }
     const res = playerBoard.makeMove(cell);
     switch (res.moveResult) {
-      case "miss":
+      case MoveResult.MISS:
         console.log(
           `\x1b[2mComputer's move: ${res.coord}. Result: ${res.moveResult}\x1b[0m`
         );
         return;
-      case "hit":
+      case MoveResult.HIT:
         console.log(
           `\x1b[2mComputer's move: ${res.coord}. Result: ${res.moveResult}\x1b[0m`
         );
         break;
-      case "sink":
+      case MoveResult.SINK:
         console.log(
           `\x1b[2mComputer's move: ${res.coord}. Result: ${res.moveResult}\x1b[0m`
         );
@@ -156,17 +156,17 @@ function play() {
     } else {
       const res = computerBoard.makeMove(answerUpper as Cell);
       switch (res.moveResult) {
-        case "miss":
+        case MoveResult.MISS:
           logValidMove(res.coord, res.moveResult);
           computerMove();
           if (playerBoard.gameLost) {
             exitGame("Computer won!");
           }
           break;
-        case "hit":
+        case MoveResult.HIT:
           logValidMove(res.coord, res.moveResult);
           break;
-        case "sink":
+        case MoveResult.SINK:
           logValidMove(res.coord, res.moveResult);
           if (computerBoard.gameLost) {
             exitGame("You won!");

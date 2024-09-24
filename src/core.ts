@@ -5,7 +5,8 @@ import {
   chooseRandomDirection,
   getRowLetter,
 } from "./helpers.js";
-import type { Ship, Cell, Direction, MoveResult } from "./types.js";
+import type { Ship, Cell, Direction } from "./types.js";
+import { MoveResult } from "./types.js";
 
 export class Battleship {
   private height = 0;
@@ -263,43 +264,32 @@ export class Battleship {
     }
   }
 
-  // Check if the cell clicked by the opponent contains a ship
-  // Update availShips, hits, misses, checks if the game is lost
-  makeMove(coord: Cell) {
-    // Can't make move if the game is lost or click twice on the same cell
-    if (this.gameLost || this.hits.has(coord) || this.misses.has(coord)) {
-      return {
-        coord: null,
-        moveResult: null,
-        remCellsNum: this.remainingShips.reduce((a, e) => a + e.size, 0),
-        gameLost: this.gameLost,
-      };
-    }
-
-    // Check each ship for the coordinate.
-    // if found update the hits, if not found update the misses
-    let moveResult: MoveResult | undefined;
+  makeMove(coord: Cell): {
+    coord: Cell;
+    moveResult: MoveResult;
+    remCellsNum: number;
+    gameLost: boolean;
+    sinkedShip: Ship | undefined;
+  } {
+    let moveResult: MoveResult = MoveResult.MISS;
     let sinkedShip: Ship | undefined;
-    // label statement to break out of nested loops
-    // more info https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/label
-    loop1: for (const ship of this.remainingShips) {
+
+    outerLoop: for (const ship of this.remainingShips) {
       for (const shipCell of ship) {
         if (shipCell === coord) {
-          this.hits.add(coord); // add coord to hits
-          ship.delete(shipCell); // remove coord from remainingShips
-          // if there are no elements in the array left, then sink is true, otherwise, hit is true
-          moveResult = ship.size ? "hit" : "sink";
-          if (moveResult === "sink") {
+          this.hits.add(coord);
+          ship.delete(shipCell);
+          moveResult = ship.size === 0 ? MoveResult.SINK : MoveResult.HIT;
+          if (moveResult === MoveResult.SINK) {
             sinkedShip = this.allShips.find((e) => e.has(coord));
           }
-          break loop1;
+          break outerLoop;
         }
       }
     }
 
-    if (!moveResult) {
-      moveResult = "miss";
-      this.misses.add(coord); // add coord to misses
+    if (moveResult === MoveResult.MISS) {
+      this.misses.add(coord);
     }
 
     // remove coord from untouched cells
