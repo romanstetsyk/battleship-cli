@@ -3,6 +3,7 @@ import {
   checkIfElementsDifferByOne,
   randomInteger,
   chooseRandomDirection,
+  getRowLetter,
 } from "./helpers.js";
 import type { Ship, Cell, Direction, MoveResult } from "./types.js";
 
@@ -51,9 +52,11 @@ export class Battleship {
     this.height = h;
     this.width = w;
 
-    for (let i = 65; i < 65 + this.height; i += 1) {
-      for (let j = 1; j <= this.width; j += 1) {
-        const cell: Cell = `${String.fromCharCode(i)}${j}`;
+    for (let i = 0; i < this.height; i += 1) {
+      for (let j = 0; j < this.width; j += 1) {
+        const x = getRowLetter(i);
+        const y = j + 1;
+        const cell: Cell = `${x}${y}`;
         this.allCells.push(cell);
         this.untouchedCells.push(cell);
       }
