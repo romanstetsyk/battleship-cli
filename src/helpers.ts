@@ -1,19 +1,31 @@
-export const checkIfElementsAreEqual = (array: string[]): boolean => {
-  const first = array[0];
-  return array.every((e) => e === first);
+export const allEqual = (arr: string[]): boolean => {
+  const [first] = arr;
+  if (arr.length === 0 || first === undefined) {
+    throw new Error("Array can't be empty");
+  }
+  return arr.every((e) => e === first);
 };
 
-export const checkIfElementsDifferByOne = (array: string[]) => {
-  const [first] = array;
-  if (!first) throw new Error("array cant be empty");
-  return array.every((e, i) => {
-    if (!e) return false;
-    if (Number.isInteger(+e)) {
-      return +e - i === +first;
-    } else {
-      return e?.charCodeAt(0) - i === first.charCodeAt(0);
-    }
-  });
+export const xDifferByOne = (arr: string[]): boolean => {
+  const [first] = arr;
+  if (arr.length === 0 || first === undefined) {
+    throw new Error("Array can't be empty");
+  }
+  return arr.every((e, i) => e.charCodeAt(0) - i === first.charCodeAt(0));
+};
+
+export const yDifferByOne = (arr: string[]): boolean => {
+  const nums = arr.map(Number);
+  if (!nums.every(Number.isInteger)) {
+    throw new Error(
+      "Elements should be of type `${number}`, where n is an integer"
+    );
+  }
+  const [first] = nums;
+  if (nums.length === 0 || first === undefined) {
+    throw new Error("Array can't be empty");
+  }
+  return nums.every((e, i) => e - i === first);
 };
 
 // Get random int between 0 and max inclusive

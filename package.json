@@ -5,7 +5,7 @@
   "main": "battleship-cli.js",
   "scripts": {
     "test": "mocha",
-    "typecheck": "tsc --build ./tsconfig.json",
+    "build": "tsc --build ./tsconfig.json",
     "node:watch": "TSX_TSCONFIG_PATH=./tsconfig.json node --import tsx --watch --watch-preserve-output src/battleship-cli.ts",
     "build:dev": "tsc --build ./tsconfig.json",
     "build:dev:watch": "npm run build:dev -- --watch --preserveWatchOutput",

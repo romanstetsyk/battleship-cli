@@ -1,6 +1,11 @@
 type Cell = `${string}${number}` | `${string}${number}${number}`;
 type Ship = Set<Cell>;
-type Direction = "horizontal" | "vertical";
+
+const Direction = {
+  HORIZONTAL: "horizontal",
+  VERTICAL: "vertical",
+} as const;
+type Direction = typeof Direction[keyof typeof Direction];
 
 const Position = {
   CENTER: "center",
@@ -22,5 +27,5 @@ const MoveResult = {
 } as const;
 type MoveResult = typeof MoveResult[keyof typeof MoveResult];
 
-export type { Cell, Ship, Direction };
-export { MoveResult, Position };
+export type { Cell, Ship };
+export { MoveResult, Position, Direction };

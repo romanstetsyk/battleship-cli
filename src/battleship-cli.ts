@@ -10,25 +10,22 @@ program.parse(process.argv);
 const width = 10;
 const height = 10;
 
-let ships: number[] | undefined;
+let shipSizes: number[] = [5, 4, 3, 3, 2, 2, 2];
 let isValidShipArray = false;
-if (Array.isArray(program.opts().ships)) {
-  ships = program.opts().ships.map(Number);
-  isValidShipArray =
-    ships?.every((n) => Number.isInteger(n) && n > 0 && n <= 5) ?? false;
+const { ships } = program.opts();
+if (Array.isArray(ships)) {
+  const sizes = ships.map(Number);
+  isValidShipArray = sizes.every((n) => Number.isInteger(n) && n > 0 && n <= 5);
+  if (isValidShipArray) {
+    shipSizes = sizes;
+  }
 }
 
 const playerBoard = new Battleship();
 const computerBoard = new Battleship();
 
-playerBoard.randomBoard(
-  [width, height],
-  isValidShipArray && ships ? ships : [5, 4, 3, 3, 2, 2, 2]
-);
-computerBoard.randomBoard(
-  [width, height],
-  isValidShipArray && ships ? ships : [5, 4, 3, 3, 2, 2, 2]
-);
+playerBoard.randomBoard([width, height], shipSizes);
+computerBoard.randomBoard([width, height], shipSizes);
 
 const rl = readline.createInterface({
   input: process.stdin,
