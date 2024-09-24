@@ -26,3 +26,12 @@ export function randomInteger(max: number): number {
 export const chooseRandomDirection = (): "horizontal" | "vertical" => {
   return Math.floor(Math.random() * 2) ? "horizontal" : "vertical";
 };
+
+export const getRowLetter = (width: number): string => {
+  let result = "";
+  do {
+    result = ((width % 26) + 10).toString(36) + result;
+    width = Math.floor(width / 26) - 1;
+  } while (width >= 0);
+  return result.toUpperCase();
+};
