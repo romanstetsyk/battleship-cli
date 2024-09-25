@@ -25,7 +25,7 @@ describe("generateShipCoords method", () => {
     });
   });
 
-  describe.only("manually placed ships", () => {
+  describe("manually placed ships", () => {
     it("should return valid horizontal ship", () => {
       assert.deepStrictEqual(
         board.generateShipCoords(3, "A1", Direction.HORIZONTAL),
