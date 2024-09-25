@@ -16,7 +16,7 @@ export class Battleship {
   public blockedCells: Cell[] = [];
   public untouchedCells: Cell[] = [];
   public allShips: Ship[] = [];
-  private remainingShips: Ship[] = [];
+  public remainingShips: Ship[] = [];
   public hits = new Set<Cell>();
   public misses = new Set<Cell>();
   public gameLost = false;
@@ -280,12 +280,12 @@ export class Battleship {
   }
 
   placeShipAndBlockSurroundingCells(
-    setOfCells: Ship,
+    ship: Ship,
     includeCornerCells = false
   ): void {
-    this.allShips.push(new Set(setOfCells));
-    this.remainingShips.push(new Set(setOfCells));
-    for (const cell of setOfCells) {
+    this.allShips.push(new Set(ship));
+    this.remainingShips.push(new Set(ship));
+    for (const cell of ship) {
       const surroundingCells = this.getSurroundingCells(
         cell,
         includeCornerCells
