@@ -12,7 +12,7 @@ export class Battleship {
   private height = 0;
   private width = 0;
   public allCells: Cell[] = [];
-  public blockedCells: Cell[] = [];
+  public blockedCells = new Set<Cell>();
   public untouchedCells = new Set<Cell>();
   public allShips: Ship[] = [];
   public remainingShips: Ship[] = [];
@@ -24,7 +24,7 @@ export class Battleship {
     // All cells. for a 10x10 board there are 100 cells
     this.allCells = [];
     // All cells with ships in them and cells that surrond the ships
-    this.blockedCells = [];
+    this.blockedCells = new Set();
     // Array of all ships, e.g [ ['0-0','0-1','0,2'], ['5-5','5-6'] ]
     this.allShips = [];
     // Ships that were not hit. It equals to all ships at the start of the game
@@ -68,7 +68,7 @@ export class Battleship {
     this.height = 0;
     this.width = 0;
     this.allCells = [];
-    this.blockedCells = [];
+    this.blockedCells = new Set();
     this.allShips = [];
     this.remainingShips = [];
     this.misses = new Set();
@@ -104,7 +104,7 @@ export class Battleship {
       const potentialShipCells: Cell[] = [];
       for (let j = i; j < i + shipSize * step; j += step) {
         const cell = this.allCells[j];
-        if (!cell || this.blockedCells.includes(cell)) {
+        if (!cell || this.blockedCells.has(cell)) {
           continue outerLoop;
         }
         potentialShipCells.push(cell);
@@ -290,9 +290,7 @@ export class Battleship {
         includeCornerCells
       );
       surroundingCells.forEach((e) => {
-        if (!this.blockedCells.includes(e)) {
-          this.blockedCells.push(e);
-        }
+        this.blockedCells.add(e);
       });
     }
   }

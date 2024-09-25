@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { Battleship } from "../src/core.js";
 import { beforeEach, describe, it } from "node:test";
-import { Direction } from "../src/types.js";
+import { Cell, Direction } from "../src/types.js";
 
 describe("possibleShipStartingCells method", () => {
   let board: Battleship;
@@ -11,7 +11,7 @@ describe("possibleShipStartingCells method", () => {
 
   it("should return an array", () => {
     board.initializeBoardSize(5, 5);
-    board.blockedCells.push("C3");
+    board.blockedCells.add("C3");
     assert.ok(
       Array.isArray(board.possibleShipStartingCells(5, Direction.VERTICAL))
     );
@@ -19,7 +19,7 @@ describe("possibleShipStartingCells method", () => {
 
   it("test 5x5 board with one cell blocked", () => {
     board.initializeBoardSize(5, 5);
-    board.blockedCells.push("C3");
+    board.blockedCells.add("C3");
     const output = ["A1", "B1", "D1", "E1"];
     assert.deepStrictEqual(
       board.possibleShipStartingCells(5, Direction.VERTICAL),
@@ -38,7 +38,10 @@ describe("possibleShipStartingCells method", () => {
 
   it("shoud throw error if ship can't be placed due to blocked cells", () => {
     board.initializeBoardSize(5, 5);
-    board.blockedCells.push("C1", "C2", "C3", "C4", "C5");
+    const cells: Cell[] = ["C1", "C2", "C3", "C4", "C5"];
+    cells.forEach((cell) => {
+      board.blockedCells.add(cell);
+    });
     const size = 3;
     assert.throws(
       () => board.possibleShipStartingCells(size, Direction.HORIZONTAL),
@@ -48,7 +51,10 @@ describe("possibleShipStartingCells method", () => {
 
   it("should work with 5x5 board with blocked cells", () => {
     board.initializeBoardSize(5, 5);
-    board.blockedCells.push("C3", "A4", "E3");
+    const cells: Cell[] = ["C3", "A4", "E3"];
+    cells.forEach((cell) => {
+      board.blockedCells.add(cell);
+    });
     // prettier-ignore
     const output = ["A1", "A2", "A5", "B1", "B2", "B4", "B5", "C1", "C2", "C4", "C5"];
     assert.deepStrictEqual(
@@ -70,7 +76,7 @@ describe("possibleShipStartingCells method", () => {
     board.initializeBoardSize(10, 10);
     const cell1 = "B3";
     const cell2 = "C3";
-    board.blockedCells.push(cell1, cell2);
+    board.blockedCells.add(cell1).add(cell2);
     const output = board.allCells.filter((c) => c !== cell1 && c !== cell2);
     assert.deepStrictEqual(
       board.possibleShipStartingCells(1, Direction.VERTICAL).length,

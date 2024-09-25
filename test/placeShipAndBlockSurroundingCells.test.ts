@@ -26,7 +26,7 @@ describe("placeShipAndBlockSurroundingCells", () => {
   it("should block cells including corners", () => {
     board.initializeBoardSize(10, 10);
     const coords: Cell[] = ["A1", "A2", "A3"];
-    const blocked = ["A1", "B1", "A2", "B2", "A3", "B3", "A4", "B4"];
+    const blocked = new Set(["A1", "B1", "A2", "B2", "A3", "B3", "A4", "B4"]);
     board.placeShipAndBlockSurroundingCells(new Set(coords), true);
     assert.deepStrictEqual(board.blockedCells, blocked);
   });
@@ -34,7 +34,7 @@ describe("placeShipAndBlockSurroundingCells", () => {
   it("should block cells excluding corners", () => {
     board.initializeBoardSize(10, 10);
     const coords: Cell[] = ["A1", "A2", "A3"];
-    const blocked = ["A1", "B1", "A2", "B2", "A3", "B3", "A4"];
+    const blocked = new Set(["A1", "B1", "A2", "B2", "A3", "B3", "A4"]);
     board.placeShipAndBlockSurroundingCells(new Set(coords));
     assert.deepStrictEqual(board.blockedCells, blocked);
   });
@@ -44,10 +44,10 @@ describe("placeShipAndBlockSurroundingCells", () => {
     const coords1: Cell[] = ["A1", "A2", "A3"];
     const coords2: Cell[] = ["C2"];
     // prettier-ignore
-    const blocked = ["A1", "B1", "A2", "B2", "A3", "B3", "A4", "C2", "D2", "C1", "C3"];
+    const blocked = new Set(["A1", "B1", "A2", "B2", "A3", "B3", "A4", "C2", "D2", "C1", "C3"]);
     board.placeShipAndBlockSurroundingCells(new Set(coords1));
     board.placeShipAndBlockSurroundingCells(new Set(coords2));
-    assert.deepStrictEqual(board.blockedCells.toString(), blocked.toString());
+    assert.deepStrictEqual(board.blockedCells, blocked);
   });
 
   it("should block cells for two ships with corners", () => {
@@ -55,9 +55,9 @@ describe("placeShipAndBlockSurroundingCells", () => {
     const coords1: Cell[] = ["A1", "A2", "A3"];
     const coords2: Cell[] = ["C2"];
     // prettier-ignore
-    const blocked = ["A1", "B1", "A2", "B2", "A3", "B3", "A4", "B4", "C2", "D2", "C1", "C3", "D1", "D3"];
+    const blocked = new Set(["A1", "B1", "A2", "B2", "A3", "B3", "A4", "B4", "C2", "D2", "C1", "C3", "D1", "D3"]);
     board.placeShipAndBlockSurroundingCells(new Set(coords1), true);
     board.placeShipAndBlockSurroundingCells(new Set(coords2), true);
-    assert.deepStrictEqual(board.blockedCells.toString(), blocked.toString());
+    assert.deepStrictEqual(board.blockedCells, blocked);
   });
 });
