@@ -28,17 +28,6 @@ export const yDifferByOne = (arr: string[]): boolean => {
   return nums.every((e, i) => e - i === first);
 };
 
-// Get random int between 0 and max inclusive
-// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random#getting_a_random_integer_between_two_values_inclusive
-export function randomInteger(max: number): number {
-  const maxFloored = Math.floor(max);
-  return Math.floor(Math.random() * (maxFloored + 1));
-}
-
-export const chooseRandomDirection = (): "horizontal" | "vertical" => {
-  return Math.floor(Math.random() * 2) ? "horizontal" : "vertical";
-};
-
 export const getRowLetter = (width: number): string => {
   let result = "";
   do {
@@ -46,4 +35,12 @@ export const getRowLetter = (width: number): string => {
     width = Math.floor(width / 26) - 1;
   } while (width >= 0);
   return result.toUpperCase();
+};
+
+export const randomElement = <T>(array: T[]): T => {
+  const elem = array[Math.floor(Math.random() * array.length)];
+  if (!elem) {
+    throw new Error("Random element error");
+  }
+  return elem;
 };

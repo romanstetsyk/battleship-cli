@@ -3,6 +3,7 @@ import { Battleship } from "./core.js";
 import { program } from "commander";
 import process from "node:process";
 import { Cell, MoveResult } from "./types.js";
+import { randomElement } from "./helpers.js";
 
 program.option("-s, --ships [numbers...]", "Ship sizes");
 program.parse(process.argv);
@@ -90,10 +91,7 @@ const grid = function (width: number, height: number) {
 
 function computerMove() {
   while (true) {
-    const randNum = Math.floor(
-      Math.random() * playerBoard.untouchedCells.length
-    );
-    const cell = playerBoard.untouchedCells[randNum];
+    const cell = randomElement([...playerBoard.untouchedCells]);
     if (!cell) {
       throw new Error("");
     }

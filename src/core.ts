@@ -1,10 +1,9 @@
 import {
   allEqual,
-  randomInteger,
-  chooseRandomDirection,
   getRowLetter,
   xDifferByOne,
   yDifferByOne,
+  randomElement,
 } from "./helpers.js";
 import type { Ship, Cell } from "./types.js";
 import { MoveResult, Position, Direction } from "./types.js";
@@ -14,7 +13,7 @@ export class Battleship {
   private width = 0;
   public allCells: Cell[] = [];
   public blockedCells: Cell[] = [];
-  public untouchedCells: Cell[] = [];
+  public untouchedCells = new Set<Cell>();
   public allShips: Ship[] = [];
   public remainingShips: Ship[] = [];
   public hits = new Set<Cell>();
@@ -35,7 +34,7 @@ export class Battleship {
     // Array of cells that your opponent hit.
     this.hits = new Set();
     // Availale cells to make moves. Those that are not misses or hits.
-    this.untouchedCells = [];
+    this.untouchedCells = new Set();
     // if gameLost is true can't make moves
     this.gameLost = false;
   }
@@ -60,7 +59,7 @@ export class Battleship {
         const y = j + 1;
         const cell: Cell = `${x}${y}`;
         this.allCells.push(cell);
-        this.untouchedCells.push(cell);
+        this.untouchedCells.add(cell);
       }
     }
   }
@@ -74,7 +73,7 @@ export class Battleship {
     this.remainingShips = [];
     this.misses = new Set();
     this.hits = new Set();
-    this.untouchedCells = [];
+    this.untouchedCells = new Set();
     this.gameLost = false;
   }
 
@@ -140,9 +139,9 @@ export class Battleship {
   }
 
   generateRandomShipCoords(shipSize: number): Ship {
-    const direction = chooseRandomDirection();
+    const direction = randomElement(Object.values(Direction));
     const possibleCells = this.possibleShipStartingCells(shipSize, direction);
-    const startingCell = possibleCells[randomInteger(possibleCells.length - 1)];
+    const startingCell = randomElement(possibleCells);
     if (!startingCell) {
       throw new Error("Index out of range");
     }
@@ -326,8 +325,7 @@ export class Battleship {
       this.misses.add(coord);
     }
 
-    // remove coord from untouched cells
-    this.untouchedCells.splice(this.untouchedCells.indexOf(coord), 1);
+    this.untouchedCells.delete(coord);
 
     // Number of remaining cells needed to hit to lose the game.
     const remCellsNum = this.remainingShips.reduce((a, e) => a + e.size, 0);
