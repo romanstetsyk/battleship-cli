@@ -16,6 +16,7 @@ export class Battleship {
   public untouchedCells = new Set<Cell>();
   public allShips: Ship[] = [];
   public remainingShips: Ship[] = [];
+  public sunkCells = new Set<Cell>();
   public hits = new Set<Cell>();
   public misses = new Set<Cell>();
   public gameLost = false;
@@ -300,10 +301,10 @@ export class Battleship {
     moveResult: MoveResult;
     remCellsNum: number;
     gameLost: boolean;
-    sinkedShip: Ship | undefined;
+    sunkShip: Ship | undefined;
   } {
     let moveResult: MoveResult = MoveResult.MISS;
-    let sinkedShip: Ship | undefined;
+    let sunkShip: Ship | undefined;
 
     outerLoop: for (const ship of this.remainingShips) {
       for (const shipCell of ship) {
@@ -312,7 +313,13 @@ export class Battleship {
           ship.delete(shipCell);
           moveResult = ship.size === 0 ? MoveResult.SINK : MoveResult.HIT;
           if (moveResult === MoveResult.SINK) {
-            sinkedShip = this.allShips.find((e) => e.has(coord));
+            sunkShip = this.allShips.find((e) => e.has(coord));
+            if (!sunkShip) {
+              throw new Error("Sunk ship not found");
+            }
+            sunkShip.forEach((cell) => {
+              this.sunkCells.add(cell);
+            });
           }
           break outerLoop;
         }
@@ -334,7 +341,7 @@ export class Battleship {
       moveResult,
       remCellsNum,
       gameLost: this.gameLost,
-      sinkedShip,
+      sunkShip,
     };
   }
 }

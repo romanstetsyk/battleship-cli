@@ -3,7 +3,7 @@ import { Battleship } from "./core.js";
 import { program } from "commander";
 import process from "node:process";
 import { Cell, MoveResult } from "./types.js";
-import { randomElement } from "./helpers.js";
+import { getRowLetter, randomElement } from "./helpers.js";
 
 program.option("-s, --ships [numbers...]", "Ship sizes");
 program.parse(process.argv);
@@ -35,23 +35,24 @@ const rl = readline.createInterface({
 
 const grid = function (width: number, height: number) {
   const spacing = "    ";
+  const offset = " ".repeat(3);
   const header = Array.from({ length: width }, (_, i) => {
-    return String.fromCharCode(65 + i);
+    return getRowLetter(i);
   }).join(" ");
   const players =
-    " ".repeat(3) +
-    "Computer".padEnd(width * 2 - 1, " ") +
-    spacing +
-    " ".repeat(3) +
-    "Me";
-  const headerRow = " ".repeat(3) + header + spacing + " ".repeat(3) + header;
+    offset + "Computer".padEnd(width * 2 - 1, " ") + spacing + offset + "Me";
+  const headerRow = offset + header + spacing + offset + header;
 
   const rows: string[] = [];
-  for (let i = 1; i <= height; i += 1) {
-    const computerRow = [i.toString().padStart(2, " ")];
-    for (let j = 65; j < 65 + width; j += 1) {
-      const coord: Cell = `${String.fromCharCode(j)}${i}`;
-      if (computerBoard.hits.has(coord)) {
+  for (let i = 0; i < height; i += 1) {
+    const y = i + 1;
+    const computerRow = [y.toString().padStart(2, " ")];
+    for (let j = 0; j < width; j += 1) {
+      const x = getRowLetter(j);
+      const coord: Cell = `${x}${y}`;
+      if (computerBoard.sunkCells.has(coord)) {
+        computerRow.push("\x1b[31m#\x1b[0m");
+      } else if (computerBoard.hits.has(coord)) {
         computerRow.push("\x1b[31mx\x1b[0m");
       } else if (computerBoard.misses.has(coord)) {
         computerRow.push("⋅");
@@ -60,18 +61,19 @@ const grid = function (width: number, height: number) {
       }
     }
 
-    const playerRow = [i.toString().padStart(2, " ")];
-    for (let j = 65; j < 65 + width; j += 1) {
-      const coord: Cell = `${String.fromCharCode(j)}${i}`;
-
+    const playerRow = [y.toString().padStart(2, " ")];
+    for (let j = 0; j < width; j += 1) {
+      const x = getRowLetter(j);
+      const coord: Cell = `${x}${y}`;
       const isShip = (coord: Cell) => {
         for (const ship of playerBoard.allShips) {
           if (ship.has(coord)) return true;
         }
         return false;
       };
-
-      if (playerBoard.hits.has(coord)) {
+      if (playerBoard.sunkCells.has(coord)) {
+        playerRow.push("\x1b[31m#\x1b[0m");
+      } else if (playerBoard.hits.has(coord)) {
         playerRow.push("\x1b[31mx\x1b[0m");
       } else if (isShip(coord)) {
         playerRow.push("*");
@@ -89,29 +91,22 @@ const grid = function (width: number, height: number) {
   return "\n" + players + "\n" + headerRow + "\n" + rows.join(" \n") + "\n";
 };
 
-function computerMove() {
+function computerMove(): void {
   while (true) {
     const cell = randomElement([...playerBoard.untouchedCells]);
-    if (!cell) {
-      throw new Error("");
-    }
     const res = playerBoard.makeMove(cell);
     switch (res.moveResult) {
       case MoveResult.MISS:
-        console.log(
-          `\x1b[2mComputer's move: ${res.coord}. Result: ${res.moveResult}\x1b[0m`
-        );
+        logValidMove("Computer's", res.coord, res.moveResult);
         return;
       case MoveResult.HIT:
-        console.log(
-          `\x1b[2mComputer's move: ${res.coord}. Result: ${res.moveResult}\x1b[0m`
-        );
+        logValidMove("Computer's", res.coord, res.moveResult);
         break;
       case MoveResult.SINK:
-        console.log(
-          `\x1b[2mComputer's move: ${res.coord}. Result: ${res.moveResult}\x1b[0m`
-        );
-        if (playerBoard.gameLost) return;
+        logValidMove("Computer's", res.coord, res.moveResult);
+        if (playerBoard.gameLost) {
+          return;
+        }
         break;
     }
   }
@@ -125,8 +120,9 @@ function exitGame(message: string): void {
   process.exit(0);
 }
 
-function logValidMove(coord: Cell, moveResult: MoveResult): void {
-  console.log(`\x1b[2mYour move: ${coord}. Result: ${moveResult}\x1b[0m`);
+function logValidMove(whoseMove: string, coord: Cell, moveResult: MoveResult) {
+  const message = `\x1b[2m${whoseMove} move: ${coord}. Result: ${moveResult}\x1b[0m`;
+  console.log(message);
 }
 
 function logInvalidMove(answer: string) {
@@ -152,21 +148,20 @@ function play() {
       const res = computerBoard.makeMove(answerUpper as Cell);
       switch (res.moveResult) {
         case MoveResult.MISS:
-          logValidMove(res.coord, res.moveResult);
+          logValidMove("Your", res.coord, res.moveResult);
           computerMove();
           if (playerBoard.gameLost) {
             exitGame("Computer won!");
           }
           break;
         case MoveResult.HIT:
-          logValidMove(res.coord, res.moveResult);
+          logValidMove("Your", res.coord, res.moveResult);
           break;
         case MoveResult.SINK:
-          logValidMove(res.coord, res.moveResult);
+          logValidMove("Your", res.coord, res.moveResult);
           if (computerBoard.gameLost) {
             exitGame("You won!");
           }
-
           break;
       }
     }
