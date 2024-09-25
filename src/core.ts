@@ -4,13 +4,13 @@ import {
   xDifferByOne,
   yDifferByOne,
   randomElement,
-} from "./helpers.js";
-import type { Ship, Cell } from "./types.js";
-import { MoveResult, Position, Direction } from "./types.js";
+} from './helpers.js';
+import type { Ship, Cell } from './types.js';
+import { MoveResult, Position, Direction } from './types.js';
 
 export class Battleship {
-  private height = 0;
-  private width = 0;
+  public height = 0;
+  public width = 0;
   public allCells: Cell[] = [];
   public blockedCells = new Set<Cell>();
   public untouchedCells = new Set<Cell>();
@@ -45,10 +45,10 @@ export class Battleship {
    */
   initializeBoardSize(h: number, w: number) {
     if (!Number.isInteger(h) || !Number.isInteger(w)) {
-      throw new Error("Height and width must be integers");
+      throw new Error('Height and width must be integers');
     }
     if (h < 5 || h > 26 || w < 5 || w > 26) {
-      throw new Error("Height and width must be between 5 and 26 inclusive");
+      throw new Error('Height and width must be between 5 and 26 inclusive');
     }
 
     this.height = h;
@@ -76,6 +76,7 @@ export class Battleship {
     this.hits = new Set();
     this.untouchedCells = new Set();
     this.gameLost = false;
+    this.sunkCells = new Set();
   }
 
   randomBoard([h, w]: [number, number], arrayOfShipSizes: number[]) {
@@ -100,7 +101,7 @@ export class Battleship {
     outerLoop: for (let i = 0; i < this.allCells.length; i += 1) {
       const currentCell = this.allCells[i];
       if (!currentCell) {
-        throw new Error("No cell");
+        throw new Error('No cell');
       }
       const potentialShipCells: Cell[] = [];
       for (let j = i; j < i + shipSize * step; j += step) {
@@ -127,7 +128,7 @@ export class Battleship {
           break;
         }
         default: {
-          throw new Error("Unknown direction");
+          throw new Error('Unknown direction');
         }
       }
     }
@@ -144,7 +145,7 @@ export class Battleship {
     const possibleCells = this.possibleShipStartingCells(shipSize, direction);
     const startingCell = randomElement(possibleCells);
     if (!startingCell) {
-      throw new Error("Index out of range");
+      throw new Error('Index out of range');
     }
     if (!possibleCells.includes(startingCell)) {
       throw new Error("Can't place this ship here");
@@ -155,11 +156,11 @@ export class Battleship {
   generateShipCoords(
     shipSize: number,
     startingCell: Cell,
-    direction: Direction
+    direction: Direction,
   ): Ship {
     const startIndex = this.allCells.indexOf(startingCell);
     if (startIndex === -1) {
-      throw new Error("startIndex not found");
+      throw new Error('startIndex not found');
     }
 
     const step = direction === Direction.HORIZONTAL ? this.width : 1;
@@ -169,7 +170,7 @@ export class Battleship {
     for (let i = startIndex; i < startIndex + shipSize * step; i += step) {
       const cell = this.allCells[i];
       if (!cell) {
-        throw new Error("No such cell");
+        throw new Error('No such cell');
       }
       shipCoords.add(cell);
     }
@@ -187,13 +188,13 @@ export class Battleship {
 
   getSurroundingCells(
     cell: Cell,
-    includeCornerCells = false
+    includeCornerCells = false,
   ): Map<Position, Cell> {
     const index = this.allCells.indexOf(cell);
 
     if (index === -1) {
       throw new Error(
-        `Element ${cell} is out of range on a ${this.height}x${this.width} board`
+        `Element ${cell} is out of range on a ${this.height}x${this.width} board`,
       );
     }
 
@@ -211,7 +212,7 @@ export class Battleship {
 
     const center = this.allCells[index];
     if (!center) {
-      throw new Error("cell should exist");
+      throw new Error('cell should exist');
     }
     const up = this.allCells[index - 1];
     const down = this.allCells[index + 1];
@@ -281,14 +282,14 @@ export class Battleship {
 
   placeShipAndBlockSurroundingCells(
     ship: Ship,
-    includeCornerCells = false
+    includeCornerCells = false,
   ): void {
     this.allShips.push(new Set(ship));
     this.remainingShips.push(new Set(ship));
     for (const cell of ship) {
       const surroundingCells = this.getSurroundingCells(
         cell,
-        includeCornerCells
+        includeCornerCells,
       );
       surroundingCells.forEach((e) => {
         this.blockedCells.add(e);
@@ -315,7 +316,7 @@ export class Battleship {
           if (moveResult === MoveResult.SINK) {
             sunkShip = this.allShips.find((e) => e.has(coord));
             if (!sunkShip) {
-              throw new Error("Sunk ship not found");
+              throw new Error('Sunk ship not found');
             }
             sunkShip.forEach((cell) => {
               this.sunkCells.add(cell);

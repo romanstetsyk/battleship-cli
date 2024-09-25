@@ -18,7 +18,7 @@ export const yDifferByOne = (arr: string[]): boolean => {
   const nums = arr.map(Number);
   if (!nums.every(Number.isInteger)) {
     throw new Error(
-      "Elements should be of type `${number}`, where n is an integer"
+      'Elements should be of type `${number}`, where n is an integer',
     );
   }
   const [first] = nums;
@@ -29,7 +29,7 @@ export const yDifferByOne = (arr: string[]): boolean => {
 };
 
 export const getRowLetter = (width: number): string => {
-  let result = "";
+  let result = '';
   do {
     result = ((width % 26) + 10).toString(36) + result;
     width = Math.floor(width / 26) - 1;
@@ -40,7 +40,7 @@ export const getRowLetter = (width: number): string => {
 export const randomElement = <T>(array: T[]): T => {
   const elem = array[Math.floor(Math.random() * array.length)];
   if (!elem) {
-    throw new Error("Random element error");
+    throw new Error('Random element error');
   }
   return elem;
 };

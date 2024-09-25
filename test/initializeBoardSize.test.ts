@@ -1,8 +1,8 @@
-import { beforeEach, describe, it } from "node:test";
-import assert from "node:assert";
-import { Battleship } from "../core.js";
+import { beforeEach, describe, it } from 'node:test';
+import assert from 'node:assert';
+import { Battleship } from '../src/core.js';
 
-describe("initializeBoardSize(h, w)", () => {
+describe('initializeBoardSize(h, w)', () => {
   const minDimention = 5;
   const maxDimention = 26;
   const cellNameRegexp = /^[A-Z]{1}\d{1,2}$/;
@@ -12,29 +12,29 @@ describe("initializeBoardSize(h, w)", () => {
     board = new Battleship();
   });
 
-  it("should throw an error if height or width is not an integer", () => {
+  it('should throw an error if height or width is not an integer', () => {
     assert.throws(
-      () => board.initializeBoardSize(2.5, "a"),
-      new Error("Height and width must be integers")
+      () => board.initializeBoardSize(2.5, 'a' as unknown as number),
+      new Error('Height and width must be integers'),
     );
     assert.throws(
       () => board.initializeBoardSize(6, 20.1),
-      new Error("Height and width must be integers")
+      new Error('Height and width must be integers'),
     );
   });
 
-  it("should throw an error if height or width are not between 5 and 25 inclusive", () => {
+  it('should throw an error if height or width are not between 5 and 25 inclusive', () => {
     assert(
       () => board.initializeBoardSize(2, 10),
-      new Error("Height and width must be between 5 and 26 inclusive")
+      new Error('Height and width must be between 5 and 26 inclusive'),
     );
     assert(
       () => board.initializeBoardSize(10, 4),
-      new Error("Height and width must be between 5 and 26 inclusive")
+      new Error('Height and width must be between 5 and 26 inclusive'),
     );
     assert(
       () => board.initializeBoardSize(30, 29),
-      new Error("Height and width must be between 5 and 26 inclusive")
+      new Error('Height and width must be between 5 and 26 inclusive'),
     );
   });
 
@@ -54,27 +54,27 @@ describe("initializeBoardSize(h, w)", () => {
     }
   });
 
-  it("should set allCells property to be an array", () => {
+  it('should set allCells property to be an array', () => {
     board.initializeBoardSize(10, 10);
     assert.strictEqual(Array.isArray(board.allCells), true);
   });
 
-  it("should set untouchedCells property to be an array", () => {
+  it('should set untouchedCells property to be an array', () => {
     board.initializeBoardSize(10, 10);
-    assert.strictEqual(Array.isArray(board.untouchedCells), true);
+    assert.strictEqual(board.untouchedCells instanceof Set, true);
   });
 
-  it("should set allCells property length to equal width * height", () => {
+  it('should set allCells property length to equal width * height', () => {
     board.initializeBoardSize(5, 14);
     assert.strictEqual(board.allCells.length, 5 * 14);
   });
 
-  it("should set untouchedCells property length to equal width * height", () => {
+  it('should set untouchedCells property length to equal width * height', () => {
     board.initializeBoardSize(6, 12);
-    assert.strictEqual(board.untouchedCells.length, 6 * 12);
+    assert.strictEqual(board.untouchedCells.size, 6 * 12);
   });
 
-  it("allCells elements should start with letter and end with number (e.g. J20)", () => {
+  it('allCells elements should start with letter and end with number (e.g. J20)', () => {
     for (let i = minDimention; i <= maxDimention; i += 1) {
       const board = new Battleship();
       board.initializeBoardSize(i, i);
@@ -82,11 +82,11 @@ describe("initializeBoardSize(h, w)", () => {
     }
   });
 
-  it("untouchedCells elements should start with letter and end with number (e.g. J20)", () => {
+  it('untouchedCells elements should start with letter and end with number (e.g. J20)', () => {
     for (let i = minDimention; i <= maxDimention; i += 1) {
       const board = new Battleship();
       board.initializeBoardSize(i, i);
-      assert.ok(board.untouchedCells.every((e) => cellNameRegexp.test(e)));
+      assert.ok([...board.untouchedCells].every((e) => cellNameRegexp.test(e)));
     }
   });
 });
