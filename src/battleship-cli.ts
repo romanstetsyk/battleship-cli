@@ -1,26 +1,76 @@
-import * as readline from "node:readline";
-import { Battleship } from "./core.js";
-import { program } from "commander";
-import process from "node:process";
-import { Cell, MoveResult } from "./types.js";
-import { getRowLetter, randomElement } from "./helpers.js";
+import * as readline from 'node:readline';
+import { Battleship } from './core.js';
+import { Option, program, InvalidArgumentError } from 'commander';
+import process from 'node:process';
+import { Cell, MoveResult } from './types.js';
+import { getRowLetter, randomElement } from './helpers.js';
 
-program.option("-s, --ships [numbers...]", "Ship sizes");
+type CliOptions = {
+  random: boolean;
+  manual: boolean;
+  ships: number[];
+  height: number;
+  width: number;
+};
+const defaultShipSizes = [5, 4, 3, 3, 2, 2, 2];
+
+function myParseInt(value: string): number {
+  const parsedValue = Number(value);
+  if (!Number.isInteger(parsedValue)) {
+    throw new InvalidArgumentError('Not a number.');
+  }
+  return parsedValue;
+}
+
+function myParseIntArrayClosure() {
+  // The first time validator is invoked
+  // the `previous` arg is equal to default value
+  let isFirstValue = true;
+  return (value: string, previous: number[]): number[] => {
+    const parsedValue = myParseInt(value);
+    if (isFirstValue) {
+      isFirstValue = false;
+      return [parsedValue];
+    }
+    return [...previous, parsedValue];
+  };
+}
+
+program
+  .addOption(
+    new Option('-r, --random', 'random placement of the ships').default(true),
+  )
+  .addOption(
+    new Option('-m, --manual', 'manual placement of the ships')
+      .default(false)
+      .conflicts('random'),
+  )
+  .addOption(
+    new Option('-h, --height <number>', "Board's height")
+      .default(10)
+      .argParser(myParseInt),
+  )
+  .addOption(
+    new Option('-w, --width <number>', "Board's width")
+      .default(10)
+      .argParser(myParseInt),
+  )
+  .addOption(
+    new Option('-s, --ships <numbers...>', 'Ship sizes')
+      .argParser<number[]>(myParseIntArrayClosure())
+      .default(defaultShipSizes),
+  );
+
 program.parse(process.argv);
 
-const width = 10;
-const height = 10;
-
-let shipSizes: number[] = [5, 4, 3, 3, 2, 2, 2];
-let isValidShipArray = false;
-const { ships } = program.opts();
-if (Array.isArray(ships)) {
-  const sizes = ships.map(Number);
-  isValidShipArray = sizes.every((n) => Number.isInteger(n) && n > 0 && n <= 5);
-  if (isValidShipArray) {
-    shipSizes = sizes;
-  }
-}
+const {
+  ships: shipSizes,
+  manual,
+  random,
+  height,
+  width,
+} = program.opts<CliOptions>();
+console.log({ shipSizes, manual, random, height, width });
 
 const playerBoard = new Battleship();
 const computerBoard = new Battleship();
@@ -34,34 +84,34 @@ const rl = readline.createInterface({
 });
 
 const grid = function (width: number, height: number) {
-  const spacing = "    ";
-  const offset = " ".repeat(3);
+  const spacing = '    ';
+  const offset = ' '.repeat(3);
   const header = Array.from({ length: width }, (_, i) => {
     return getRowLetter(i);
-  }).join(" ");
+  }).join(' ');
   const players =
-    offset + "Computer".padEnd(width * 2 - 1, " ") + spacing + offset + "Me";
+    offset + 'Computer'.padEnd(width * 2 - 1, ' ') + spacing + offset + 'Me';
   const headerRow = offset + header + spacing + offset + header;
 
   const rows: string[] = [];
   for (let i = 0; i < height; i += 1) {
     const y = i + 1;
-    const computerRow = [y.toString().padStart(2, " ")];
+    const computerRow = [y.toString().padStart(2, ' ')];
     for (let j = 0; j < width; j += 1) {
       const x = getRowLetter(j);
       const coord: Cell = `${x}${y}`;
       if (computerBoard.sunkCells.has(coord)) {
-        computerRow.push("\x1b[31m#\x1b[0m");
+        computerRow.push('\x1b[31m#\x1b[0m');
       } else if (computerBoard.hits.has(coord)) {
-        computerRow.push("\x1b[31mx\x1b[0m");
+        computerRow.push('\x1b[31mx\x1b[0m');
       } else if (computerBoard.misses.has(coord)) {
-        computerRow.push("⋅");
+        computerRow.push('⋅');
       } else {
-        computerRow.push(" ");
+        computerRow.push(' ');
       }
     }
 
-    const playerRow = [y.toString().padStart(2, " ")];
+    const playerRow = [y.toString().padStart(2, ' ')];
     for (let j = 0; j < width; j += 1) {
       const x = getRowLetter(j);
       const coord: Cell = `${x}${y}`;
@@ -72,23 +122,23 @@ const grid = function (width: number, height: number) {
         return false;
       };
       if (playerBoard.sunkCells.has(coord)) {
-        playerRow.push("\x1b[31m#\x1b[0m");
+        playerRow.push('\x1b[31m#\x1b[0m');
       } else if (playerBoard.hits.has(coord)) {
-        playerRow.push("\x1b[31mx\x1b[0m");
+        playerRow.push('\x1b[31mx\x1b[0m');
       } else if (isShip(coord)) {
-        playerRow.push("*");
+        playerRow.push('*');
       } else if (playerBoard.misses.has(coord)) {
-        playerRow.push("⋅");
+        playerRow.push('⋅');
       } else {
-        playerRow.push(" ");
+        playerRow.push(' ');
       }
     }
 
-    const gameRow = computerRow.join(" ") + spacing + playerRow.join(" ");
+    const gameRow = computerRow.join(' ') + spacing + playerRow.join(' ');
     rows.push(gameRow);
   }
 
-  return "\n" + players + "\n" + headerRow + "\n" + rows.join(" \n") + "\n";
+  return '\n' + players + '\n' + headerRow + '\n' + rows.join(' \n') + '\n';
 };
 
 function computerMove(): void {
@@ -148,19 +198,19 @@ function play() {
       const res = computerBoard.makeMove(answerUpper as Cell);
       switch (res.moveResult) {
         case MoveResult.MISS:
-          logValidMove("Your", res.coord, res.moveResult);
+                logValidMove('Your', res.coord, res.moveResult);
           computerMove();
           if (playerBoard.gameLost) {
-            exitGame("Computer won!");
+                  exitGame('Computer won!');
           }
           break;
         case MoveResult.HIT:
-          logValidMove("Your", res.coord, res.moveResult);
+                logValidMove('Your', res.coord, res.moveResult);
           break;
         case MoveResult.SINK:
-          logValidMove("Your", res.coord, res.moveResult);
+                logValidMove('Your', res.coord, res.moveResult);
           if (computerBoard.gameLost) {
-            exitGame("You won!");
+                  exitGame('You won!');
           }
           break;
       }
