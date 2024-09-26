@@ -1,3 +1,5 @@
+import { InvalidArgumentError } from 'commander';
+
 export const allEqual = (arr: string[]): boolean => {
   const [first] = arr;
   if (arr.length === 0 || first === undefined) {
@@ -43,4 +45,26 @@ export const randomElement = <T>(array: T[]): T => {
     throw new Error('Random element error');
   }
   return elem;
+};
+
+export const parsePosInt = (value: string): number => {
+  const parsedValue = Number(value);
+  if (parsedValue <= 0 || !Number.isInteger(parsedValue)) {
+    throw new InvalidArgumentError('Not a number.');
+  }
+  return parsedValue;
+};
+
+export const parsePosIntArrayClosure = () => {
+  // The first time validator is invoked
+  // the `previous` arg is equal to default value
+  let isFirstValue = true;
+  return (value: string, previous: number[]): number[] => {
+    const parsedValue = parsePosInt(value);
+    if (isFirstValue) {
+      isFirstValue = false;
+      return [parsedValue];
+    }
+    return [...previous, parsedValue];
+  };
 };
