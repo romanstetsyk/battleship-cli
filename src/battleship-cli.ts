@@ -5,7 +5,7 @@ import process from 'node:process';
 import { Cell, MoveResult } from './types.js';
 import {
   getRowLetter,
-  parsePosInt,
+  parseDimension,
   parsePosIntArrayClosure,
   randomElement,
 } from './helpers.js';
@@ -32,12 +32,12 @@ program
   .addOption(
     new Option('-h, --height <number>', "Board's height")
       .default(10)
-      .argParser(parsePosInt),
+      .argParser(parseDimension),
   )
   .addOption(
     new Option('-w, --width <number>', "Board's width")
       .default(10)
-      .argParser(parsePosInt),
+      .argParser(parseDimension),
   )
   .addOption(
     new Option('-s, --ships <numbers...>', 'Ship sizes')
@@ -48,6 +48,7 @@ program
 program.parse(process.argv);
 
 const { ships: shipSizes, height, width } = program.opts<CliOptions>();
+console.log({ ships: shipSizes, height, width });
 
 const GameCommand = {
   NEW: 'new',
@@ -70,8 +71,8 @@ class Game {
     this.finished = false;
 
     try {
-      this.playerBoard.randomBoard([width, height], shipSizes);
-      this.computerBoard.randomBoard([width, height], shipSizes);
+      this.playerBoard.randomBoard([height, width], shipSizes);
+      this.computerBoard.randomBoard([height, width], shipSizes);
     } catch {
       console.log(
         `Not enough space to randomly generage a board of size ${height}x${width} with all ships: ${shipSizes.join(' ')}`,
@@ -105,7 +106,7 @@ class Game {
     return rows;
   }
 
-  public drawGrid(width: number, height: number): string {
+  public drawGrid(height: number, width: number): string {
     const spacing = ' '.repeat(4);
     const offset = ' '.repeat(3);
     const header = Array.from({ length: width }, (_, i) => {
@@ -203,7 +204,7 @@ class Game {
   }
 
   public async play() {
-    console.log(this.drawGrid(width, height));
+    console.log(this.drawGrid(height, width));
 
     const qs: PromptObject = {
       type: 'text',
@@ -236,19 +237,19 @@ class Game {
           case GameCommand.EXIT:
           case GameCommand.QUIT: {
             this.logMessage('Game interrupted');
-            console.log(this.drawGrid(width, height));
+            console.log(this.drawGrid(height, width));
             return;
           }
           case GameCommand.NEW: {
             this.logs = [];
-            this.playerBoard.randomBoard([width, height], shipSizes);
-            this.computerBoard.randomBoard([width, height], shipSizes);
+            this.playerBoard.randomBoard([height, width], shipSizes);
+            this.computerBoard.randomBoard([height, width], shipSizes);
             break;
           }
           default: {
             this.playerMove(answerLower);
             if (this.finished) {
-              console.log(this.drawGrid(width, height));
+              console.log(this.drawGrid(height, width));
               return;
             }
           }

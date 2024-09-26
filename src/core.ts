@@ -43,19 +43,19 @@ export class Battleship {
    * Sets the list of all cells and available cells. The size of the array is h*w
    * This is a helper method for this.randomBoard method
    */
-  initializeBoardSize(h: number, w: number) {
-    if (!Number.isInteger(h) || !Number.isInteger(w)) {
+  initializeBoardSize(height: number, width: number) {
+    if (!Number.isInteger(height) || !Number.isInteger(width)) {
       throw new Error('Height and width must be integers');
     }
-    if (h < 5 || h > 26 || w < 5 || w > 26) {
+    if (height < 5 || height > 26 || width < 5 || width > 26) {
       throw new Error('Height and width must be between 5 and 26 inclusive');
     }
 
-    this.height = h;
-    this.width = w;
+    this.height = height;
+    this.width = width;
 
-    for (let i = 0; i < this.height; i += 1) {
-      for (let j = 0; j < this.width; j += 1) {
+    for (let i = 0; i < this.width; i += 1) {
+      for (let j = 0; j < this.height; j += 1) {
         const x = getRowLetter(i);
         const y = j + 1;
         const cell: Cell = `${x}${y}`;
@@ -86,9 +86,9 @@ export class Battleship {
     return false;
   }
 
-  randomBoard([h, w]: [number, number], arrayOfShipSizes: number[]) {
+  randomBoard([height, width]: [number, number], arrayOfShipSizes: number[]) {
     this.reset();
-    this.initializeBoardSize(h, w);
+    this.initializeBoardSize(height, width);
     arrayOfShipSizes.forEach((size) => {
       const ship = this.generateRandomShipCoords(size);
       this.placeShipAndBlockSurroundingCells(ship);
@@ -98,7 +98,7 @@ export class Battleship {
   possibleShipStartingCells(shipSize: number, direction: Direction): Cell[] {
     const arrayOfCells: Cell[] = [];
 
-    const step = direction === Direction.HORIZONTAL ? this.width : 1;
+    const step = direction === Direction.HORIZONTAL ? this.height : 1;
 
     outerLoop: for (let i = 0; i < this.allCells.length; i += 1) {
       const currentCell = this.allCells[i];
@@ -165,7 +165,7 @@ export class Battleship {
       throw new Error('startIndex not found');
     }
 
-    const step = direction === Direction.HORIZONTAL ? this.width : 1;
+    const step = direction === Direction.HORIZONTAL ? this.height : 1;
 
     const shipCoords: Ship = new Set<Cell>();
 
@@ -218,8 +218,8 @@ export class Battleship {
     }
     const up = this.allCells[index - 1];
     const down = this.allCells[index + 1];
-    const left = this.allCells[index - this.width];
-    const right = this.allCells[index + this.width];
+    const left = this.allCells[index - this.height];
+    const right = this.allCells[index + this.height];
 
     surrondingCells.set(Position.CENTER, center);
     if (left && isSameRow(left, center)) {
@@ -236,10 +236,10 @@ export class Battleship {
     }
 
     if (includeCornerCells) {
-      const upLeft = this.allCells[index - this.width - 1];
-      const downLeft = this.allCells[index - this.width + 1];
-      const upRight = this.allCells[index + this.width - 1];
-      const downRight = this.allCells[index + this.width + 1];
+      const upLeft = this.allCells[index - this.height - 1];
+      const downLeft = this.allCells[index - this.height + 1];
+      const upRight = this.allCells[index + this.height - 1];
+      const downRight = this.allCells[index + this.height + 1];
 
       if (
         upLeft &&

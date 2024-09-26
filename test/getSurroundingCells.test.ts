@@ -3,12 +3,12 @@ import { beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert';
 import { Cell, Position } from '../src/types.js';
 
-describe('getSurroundingCells method', () => {
-  let board: Battleship;
-  beforeEach(() => {
-    board = new Battleship();
-  });
+let board: Battleship;
+beforeEach(() => {
+  board = new Battleship();
+});
 
+describe('getSurroundingCells for square boards', () => {
   it('should return an array', () => {
     board.initializeBoardSize(10, 10);
     assert.ok(board.getSurroundingCells('C4') instanceof Map);
@@ -320,5 +320,21 @@ describe('getSurroundingCells method', () => {
       board.getSurroundingCells(c.cell, c.corners),
       c.outptut,
     );
+  });
+});
+
+describe('getSurroundingCells for rectangular boards', () => {
+  it('should work for J2 without corners', () => {
+    board.initializeBoardSize(5, 10);
+    const c = {
+      cell: 'J2' as Cell,
+      outptut: new Map([
+        [Position.CENTER, 'J2'],
+        [Position.LEFT, 'I2'],
+        [Position.UP, 'J1'],
+        [Position.DOWN, 'J3'],
+      ]),
+    };
+    assert.deepStrictEqual(board.getSurroundingCells(c.cell), c.outptut);
   });
 });

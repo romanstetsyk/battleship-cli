@@ -50,7 +50,15 @@ export const randomElement = <T>(array: T[]): T => {
 export const parsePosInt = (value: string): number => {
   const parsedValue = Number(value);
   if (parsedValue <= 0 || !Number.isInteger(parsedValue)) {
-    throw new InvalidArgumentError('Not a number.');
+    throw new InvalidArgumentError('Not a positive integer.');
+  }
+  return parsedValue;
+};
+
+export const parseDimension = (value: string): number => {
+  const parsedValue = parsePosInt(value);
+  if (parsedValue < 5 || parsedValue > 26) {
+    throw new InvalidArgumentError('Should be between 5 and 26');
   }
   return parsedValue;
 };
