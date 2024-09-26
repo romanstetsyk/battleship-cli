@@ -48,7 +48,6 @@ program
 program.parse(process.argv);
 
 const { ships: shipSizes, height, width } = program.opts<CliOptions>();
-console.log({ ships: shipSizes, height, width });
 
 const GameCommand = {
   NEW: 'new',
@@ -70,9 +69,24 @@ class Game {
     this.logs = [];
     this.finished = false;
 
+    this.generateRandomBoards();
+  }
+
+  public generateRandomBoards(): void {
+    const maxTries = 10000;
     try {
-      this.playerBoard.randomBoard([height, width], shipSizes);
-      this.computerBoard.randomBoard([height, width], shipSizes);
+      for (let i = 0; i <= maxTries; i += 1) {
+        try {
+          this.playerBoard.randomBoard([height, width], shipSizes);
+          this.computerBoard.randomBoard([height, width], shipSizes);
+          break;
+        } catch {
+          this.playerBoard.reset();
+          if (i === maxTries) {
+            throw new Error(`Couldn't generate random board ${maxTries} times`);
+          }
+        }
+      }
     } catch {
       console.log(
         `Not enough space to randomly generage a board of size ${height}x${width} with all ships: ${shipSizes.join(' ')}`,
@@ -242,8 +256,7 @@ class Game {
           }
           case GameCommand.NEW: {
             this.logs = [];
-            this.playerBoard.randomBoard([height, width], shipSizes);
-            this.computerBoard.randomBoard([height, width], shipSizes);
+            this.generateRandomBoards();
             break;
           }
           default: {

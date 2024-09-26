@@ -95,7 +95,10 @@ export class Battleship {
     });
   }
 
-  possibleShipStartingCells(shipSize: number, direction: Direction): Cell[] {
+  possibleShipStartingCells(
+    shipSize: number,
+    direction: Direction,
+  ): Cell[] | null {
     const arrayOfCells: Cell[] = [];
 
     const step = direction === Direction.HORIZONTAL ? this.height : 1;
@@ -136,15 +139,25 @@ export class Battleship {
     }
 
     if (arrayOfCells.length === 0) {
-      throw new Error(`Not enough space for a ship size ${shipSize}`);
+      return null;
     }
 
     return arrayOfCells;
   }
 
   generateRandomShipCoords(shipSize: number): Ship {
-    const direction = randomElement(Object.values(Direction));
-    const possibleCells = this.possibleShipStartingCells(shipSize, direction);
+    let direction = randomElement(Object.values(Direction));
+    let possibleCells = this.possibleShipStartingCells(shipSize, direction);
+    if (!possibleCells) {
+      direction =
+        direction === Direction.HORIZONTAL
+          ? Direction.VERTICAL
+          : Direction.HORIZONTAL;
+      possibleCells = this.possibleShipStartingCells(shipSize, direction);
+      if (!possibleCells) {
+        throw new Error(`Not enough space for a ship size ${shipSize}`);
+      }
+    }
     const startingCell = randomElement(possibleCells);
     if (!startingCell) {
       throw new Error('Index out of range');
