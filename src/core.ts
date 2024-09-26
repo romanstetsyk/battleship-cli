@@ -87,17 +87,12 @@ export class Battleship {
   }
 
   randomBoard([h, w]: [number, number], arrayOfShipSizes: number[]) {
-    try {
-      this.reset();
-      this.initializeBoardSize(h, w);
-      arrayOfShipSizes.forEach((size) => {
-        const ship = this.generateRandomShipCoords(size);
-        this.placeShipAndBlockSurroundingCells(ship);
-      });
-    } catch (err) {
-      console.error(err);
-      this.reset();
-    }
+    this.reset();
+    this.initializeBoardSize(h, w);
+    arrayOfShipSizes.forEach((size) => {
+      const ship = this.generateRandomShipCoords(size);
+      this.placeShipAndBlockSurroundingCells(ship);
+    });
   }
 
   possibleShipStartingCells(shipSize: number, direction: Direction): Cell[] {

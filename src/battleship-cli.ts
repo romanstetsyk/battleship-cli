@@ -1,9 +1,15 @@
 import * as readline from 'node:readline';
 import { Battleship } from './core.js';
-import { Option, program, InvalidArgumentError } from 'commander';
+import { Option, program } from 'commander';
 import process from 'node:process';
 import { Cell, MoveResult } from './types.js';
-import { getRowLetter, randomElement } from './helpers.js';
+import {
+  getRowLetter,
+  parsePosInt,
+  parsePosIntArrayClosure,
+  randomElement,
+} from './helpers.js';
+import prompts, { PromptObject } from 'prompts';
 
 type CliOptions = {
   random: boolean;
@@ -13,28 +19,6 @@ type CliOptions = {
   width: number;
 };
 const defaultShipSizes = [5, 4, 3, 3, 2, 2, 2];
-
-function myParseInt(value: string): number {
-  const parsedValue = Number(value);
-  if (!Number.isInteger(parsedValue)) {
-    throw new InvalidArgumentError('Not a number.');
-  }
-  return parsedValue;
-}
-
-function myParseIntArrayClosure() {
-  // The first time validator is invoked
-  // the `previous` arg is equal to default value
-  let isFirstValue = true;
-  return (value: string, previous: number[]): number[] => {
-    const parsedValue = myParseInt(value);
-    if (isFirstValue) {
-      isFirstValue = false;
-      return [parsedValue];
-    }
-    return [...previous, parsedValue];
-  };
-}
 
 program
   .addOption(
@@ -48,16 +32,16 @@ program
   .addOption(
     new Option('-h, --height <number>', "Board's height")
       .default(10)
-      .argParser(myParseInt),
+      .argParser(parsePosInt),
   )
   .addOption(
     new Option('-w, --width <number>', "Board's width")
       .default(10)
-      .argParser(myParseInt),
+      .argParser(parsePosInt),
   )
   .addOption(
     new Option('-s, --ships <numbers...>', 'Ship sizes')
-      .argParser<number[]>(myParseIntArrayClosure())
+      .argParser<number[]>(parsePosIntArrayClosure())
       .default(defaultShipSizes),
   );
 
@@ -65,143 +49,216 @@ program.parse(process.argv);
 
 const { ships: shipSizes, height, width } = program.opts<CliOptions>();
 
-const playerBoard = new Battleship();
-const computerBoard = new Battleship();
+const GameCommand = {
+  NEW: 'new',
+  EXIT: 'exit',
+  QUIT: 'quit',
+  MANUAL: 'manual',
+} as const;
+type GameCommand = (typeof GameCommand)[keyof typeof GameCommand];
 
-playerBoard.randomBoard([width, height], shipSizes);
-computerBoard.randomBoard([width, height], shipSizes);
+class Game {
+  public playerBoard;
+  public computerBoard;
+  public finished;
+  public logs: string[];
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
+  public constructor() {
+    this.playerBoard = new Battleship();
+    this.computerBoard = new Battleship();
+    this.logs = [];
+    this.finished = false;
 
-const fillBoard = (board: Battleship, highlightAllShips = false): string[] => {
-  const rows: string[] = [];
-  for (let i = 0; i < board.height; i += 1) {
-    const y = i + 1;
-    const row = [y.toString().padStart(2, ' ')];
-    for (let j = 0; j < width; j += 1) {
-      const x = getRowLetter(j);
-      const coord: Cell = `${x}${y}`;
-      if (board.sunkCells.has(coord)) {
-        row.push('\x1b[31m#\x1b[0m');
-      } else if (board.hits.has(coord)) {
-        row.push('\x1b[31mx\x1b[0m');
-      } else if (board.isShip(coord) && highlightAllShips) {
-        row.push('*');
-      } else if (board.misses.has(coord)) {
-        row.push('⋅');
-      } else {
-        row.push(' ');
+    try {
+      this.playerBoard.randomBoard([width, height], shipSizes);
+      this.computerBoard.randomBoard([width, height], shipSizes);
+    } catch {
+      console.log(
+        `Not enough space to randomly generage a board of size ${height}x${width} with all ships: ${shipSizes.join(' ')}`,
+      );
+      process.exit(1);
+    }
+  }
+
+  public fillBoard(board: Battleship, highlightAllShips = false): string[] {
+    const rows: string[] = [];
+    for (let i = 0; i < board.height; i += 1) {
+      const y = i + 1;
+      const row = [y.toString().padStart(2, ' ')];
+      for (let j = 0; j < width; j += 1) {
+        const x = getRowLetter(j);
+        const coord: Cell = `${x}${y}`;
+        if (board.sunkCells.has(coord)) {
+          row.push('\x1b[31m#\x1b[0m');
+        } else if (board.hits.has(coord)) {
+          row.push('\x1b[31mx\x1b[0m');
+        } else if (board.isShip(coord) && highlightAllShips) {
+          row.push('*');
+        } else if (board.misses.has(coord)) {
+          row.push('⋅');
+        } else {
+          row.push(' ');
+        }
+      }
+      rows.push(row.join(' '));
+    }
+    return rows;
+  }
+
+  public drawGrid(width: number, height: number): string {
+    const spacing = ' '.repeat(4);
+    const offset = ' '.repeat(3);
+    const header = Array.from({ length: width }, (_, i) => {
+      return getRowLetter(i);
+    }).join(' ');
+    const players =
+      offset +
+      'Computer'.padEnd(width * 2 - 1, ' ') +
+      spacing +
+      offset +
+      'Me'.padEnd(width * 2 - 1, ' ') +
+      spacing +
+      'Moves';
+    const headerRow = offset + header + spacing + offset + header;
+
+    const rows: string[] = [];
+
+    const cRows = this.fillBoard(this.computerBoard);
+    const pRows = this.fillBoard(this.playerBoard, true);
+    const lRows = this.logs.slice(-height);
+    for (let i = 0; i < height; i += 1) {
+      const computerRow = cRows[i];
+      const playerRow = pRows[i];
+      const logRow = lRows[i] ?? '';
+      const gameRow = computerRow + spacing + playerRow + spacing + logRow;
+      rows.push(gameRow);
+    }
+
+    return '\n' + players + '\n' + headerRow + '\n' + rows.join(' \n') + '\n';
+  }
+
+  public computerMove(): void {
+    while (true) {
+      const cell = randomElement([...this.playerBoard.untouchedCells]);
+      const res = this.playerBoard.makeMove(cell);
+      switch (res.moveResult) {
+        case MoveResult.MISS:
+          this.logValidMove('Computer', res.coord, res.moveResult);
+          return;
+        case MoveResult.HIT:
+          this.logValidMove('Computer', res.coord, res.moveResult);
+          break;
+        case MoveResult.SINK:
+          this.logValidMove('Computer', res.coord, res.moveResult);
+          if (this.playerBoard.gameLost) {
+            return;
+          }
+          break;
       }
     }
-    rows.push(row.join(' '));
-  }
-  return rows;
-};
-
-const grid = function (width: number, height: number) {
-  const spacing = '    ';
-  const offset = ' '.repeat(3);
-  const header = Array.from({ length: width }, (_, i) => {
-    return getRowLetter(i);
-  }).join(' ');
-  const players =
-    offset + 'Computer'.padEnd(width * 2 - 1, ' ') + spacing + offset + 'Me';
-  const headerRow = offset + header + spacing + offset + header;
-
-  const rows: string[] = [];
-
-  const cRows = fillBoard(computerBoard);
-  const pRows = fillBoard(playerBoard, true);
-  for (let i = 0; i < height; i += 1) {
-    const computerRow = cRows[i];
-    const playerRow = pRows[i];
-    const gameRow = computerRow + spacing + playerRow;
-    rows.push(gameRow);
   }
 
-  return '\n' + players + '\n' + headerRow + '\n' + rows.join(' \n') + '\n';
-};
+  public logMessage(message: string): void {
+    const msg = `\x1b[2m${message}\x1b[0m`;
+    this.logs.push(msg);
+  }
 
-function computerMove(): void {
-  while (true) {
-    const cell = randomElement([...playerBoard.untouchedCells]);
-    const res = playerBoard.makeMove(cell);
+  public logValidMove(player: string, coord: Cell, moveResult: MoveResult) {
+    const message = `\x1b[2m${player}: ${coord} - ${moveResult}\x1b[0m`;
+    this.logs.push(message);
+  }
+
+  public logInvalidMove(answer: string) {
+    const message = `\x1b[2mInvalid move \`${answer}\`. Try again.\x1b[0m`;
+    this.logs.push(message);
+  }
+
+  public playerMove(answer: string): void {
+    const answerUpper = answer.toUpperCase();
+    const res = this.computerBoard.makeMove(answerUpper as Cell);
     switch (res.moveResult) {
       case MoveResult.MISS:
-        logValidMove("Computer's", res.coord, res.moveResult);
-        return;
+        this.logValidMove('You', res.coord, res.moveResult);
+        this.computerMove();
+        if (this.playerBoard.gameLost) {
+          this.logMessage('Computer won!');
+          this.finished = true;
+        }
+        break;
       case MoveResult.HIT:
-        logValidMove("Computer's", res.coord, res.moveResult);
+        this.logValidMove('You', res.coord, res.moveResult);
         break;
       case MoveResult.SINK:
-        logValidMove("Computer's", res.coord, res.moveResult);
-        if (playerBoard.gameLost) {
-          return;
+        this.logValidMove('You', res.coord, res.moveResult);
+        if (this.computerBoard.gameLost) {
+          this.logMessage('You won!');
+          this.finished = true;
         }
         break;
     }
   }
-}
 
-function exitGame(message: string): void {
-  console.log(`\x1b[2m${message}\x1b[0m`);
-  console.log(grid(width, height));
-  rl.close();
-  rl.removeAllListeners();
-  process.exit(0);
-}
+  public isValidMove(answer: string): boolean {
+    return this.computerBoard.allCells.includes(answer.toUpperCase() as Cell);
+  }
 
-function logValidMove(whoseMove: string, coord: Cell, moveResult: MoveResult) {
-  const message = `\x1b[2m${whoseMove} move: ${coord}. Result: ${moveResult}\x1b[0m`;
-  console.log(message);
-}
+  public async play() {
+    console.log(this.drawGrid(width, height));
 
-function logInvalidMove(answer: string) {
-  console.log(`\x1b[2mYour move: ${answer}. Invalid move. Try again\x1b[0m`);
-}
+    const qs: PromptObject = {
+      type: 'text',
+      name: 'cell',
+      message: 'Your move (e.g. A1 | a1): ',
+      validate: (value: string) => {
+        const lower = value.toLowerCase();
+        if (Object.values(GameCommand).includes(lower as GameCommand)) {
+          return true;
+        }
+        if (this.isValidMove(value)) {
+          return true;
+        }
+        return `Invalid move \`${value}\`. Try again.`;
+      },
+    };
 
-function play() {
-  rl.question(grid(width, height) + "\nYour move (e.g. A1) : ", (answer) => {
-    readline.moveCursor(process.stdout, 0, -height - 5);
-    readline.clearLine(process.stdout, 0);
-    readline.clearScreenDown(process.stdout);
+    await prompts(qs, {
+      onSubmit: async (_, answer) => {
+        readline.moveCursor(process.stdout, 0, -height - 5);
+        readline.clearLine(process.stdout, 0);
+        readline.clearScreenDown(process.stdout);
 
-    const answerUpper = answer.toUpperCase();
+        const answerLower = answer.toLowerCase();
 
-    if (answerUpper === "EXIT") {
-      exitGame("Game interrupted");
-    }
-
-    const isValidMove = computerBoard.allCells.includes(answerUpper as Cell);
-    if (!isValidMove) {
-      logInvalidMove(answerUpper);
-    } else {
-      const res = computerBoard.makeMove(answerUpper as Cell);
-      switch (res.moveResult) {
-        case MoveResult.MISS:
-                logValidMove('Your', res.coord, res.moveResult);
-          computerMove();
-          if (playerBoard.gameLost) {
-                  exitGame('Computer won!');
+        switch (answerLower) {
+          case GameCommand.MANUAL: {
+            break;
           }
-          break;
-        case MoveResult.HIT:
-                logValidMove('Your', res.coord, res.moveResult);
-          break;
-        case MoveResult.SINK:
-                logValidMove('Your', res.coord, res.moveResult);
-          if (computerBoard.gameLost) {
-                  exitGame('You won!');
+          case GameCommand.EXIT:
+          case GameCommand.QUIT: {
+            this.logMessage('Game interrupted');
+            console.log(this.drawGrid(width, height));
+            return;
           }
-          break;
-      }
-    }
+          case GameCommand.NEW: {
+            this.logs = [];
+            this.playerBoard.randomBoard([width, height], shipSizes);
+            this.computerBoard.randomBoard([width, height], shipSizes);
+            break;
+          }
+          default: {
+            this.playerMove(answerLower);
+            if (this.finished) {
+              console.log(this.drawGrid(width, height));
+              return;
+            }
+          }
+        }
 
-    play();
-  });
+        this.play();
+      },
+    });
+  }
 }
 
-play();
+const game = new Game();
+game.play();
