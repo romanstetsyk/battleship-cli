@@ -63,14 +63,7 @@ program
 
 program.parse(process.argv);
 
-const {
-  ships: shipSizes,
-  manual,
-  random,
-  height,
-  width,
-} = program.opts<CliOptions>();
-console.log({ shipSizes, manual, random, height, width });
+const { ships: shipSizes, height, width } = program.opts<CliOptions>();
 
 const playerBoard = new Battleship();
 const computerBoard = new Battleship();
@@ -83,6 +76,31 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
+const fillBoard = (board: Battleship, highlightAllShips = false): string[] => {
+  const rows: string[] = [];
+  for (let i = 0; i < board.height; i += 1) {
+    const y = i + 1;
+    const row = [y.toString().padStart(2, ' ')];
+    for (let j = 0; j < width; j += 1) {
+      const x = getRowLetter(j);
+      const coord: Cell = `${x}${y}`;
+      if (board.sunkCells.has(coord)) {
+        row.push('\x1b[31m#\x1b[0m');
+      } else if (board.hits.has(coord)) {
+        row.push('\x1b[31mx\x1b[0m');
+      } else if (board.isShip(coord) && highlightAllShips) {
+        row.push('*');
+      } else if (board.misses.has(coord)) {
+        row.push('⋅');
+      } else {
+        row.push(' ');
+      }
+    }
+    rows.push(row.join(' '));
+  }
+  return rows;
+};
+
 const grid = function (width: number, height: number) {
   const spacing = '    ';
   const offset = ' '.repeat(3);
@@ -94,47 +112,13 @@ const grid = function (width: number, height: number) {
   const headerRow = offset + header + spacing + offset + header;
 
   const rows: string[] = [];
+
+  const cRows = fillBoard(computerBoard);
+  const pRows = fillBoard(playerBoard, true);
   for (let i = 0; i < height; i += 1) {
-    const y = i + 1;
-    const computerRow = [y.toString().padStart(2, ' ')];
-    for (let j = 0; j < width; j += 1) {
-      const x = getRowLetter(j);
-      const coord: Cell = `${x}${y}`;
-      if (computerBoard.sunkCells.has(coord)) {
-        computerRow.push('\x1b[31m#\x1b[0m');
-      } else if (computerBoard.hits.has(coord)) {
-        computerRow.push('\x1b[31mx\x1b[0m');
-      } else if (computerBoard.misses.has(coord)) {
-        computerRow.push('⋅');
-      } else {
-        computerRow.push(' ');
-      }
-    }
-
-    const playerRow = [y.toString().padStart(2, ' ')];
-    for (let j = 0; j < width; j += 1) {
-      const x = getRowLetter(j);
-      const coord: Cell = `${x}${y}`;
-      const isShip = (coord: Cell) => {
-        for (const ship of playerBoard.allShips) {
-          if (ship.has(coord)) return true;
-        }
-        return false;
-      };
-      if (playerBoard.sunkCells.has(coord)) {
-        playerRow.push('\x1b[31m#\x1b[0m');
-      } else if (playerBoard.hits.has(coord)) {
-        playerRow.push('\x1b[31mx\x1b[0m');
-      } else if (isShip(coord)) {
-        playerRow.push('*');
-      } else if (playerBoard.misses.has(coord)) {
-        playerRow.push('⋅');
-      } else {
-        playerRow.push(' ');
-      }
-    }
-
-    const gameRow = computerRow.join(' ') + spacing + playerRow.join(' ');
+    const computerRow = cRows[i];
+    const playerRow = pRows[i];
+    const gameRow = computerRow + spacing + playerRow;
     rows.push(gameRow);
   }
 

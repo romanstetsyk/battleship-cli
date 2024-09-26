@@ -79,6 +79,13 @@ export class Battleship {
     this.sunkCells = new Set();
   }
 
+  isShip(coord: Cell) {
+    for (const ship of this.allShips) {
+      if (ship.has(coord)) return true;
+    }
+    return false;
+  }
+
   randomBoard([h, w]: [number, number], arrayOfShipSizes: number[]) {
     try {
       this.reset();
