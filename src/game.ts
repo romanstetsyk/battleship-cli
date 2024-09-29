@@ -2,7 +2,7 @@ import prompts, { PromptObject } from 'prompts';
 import * as readline from 'node:readline';
 import { Battleship } from './core.js';
 import { getRowLetter, randomElement } from './helpers.js';
-import { Cell, MoveResult } from './types.js';
+import { Cell, Direction, MoveResult } from './types.js';
 
 const GameCommand = {
   NEW: 'new',
@@ -37,8 +37,6 @@ class Game {
     this.computerBoard = new Battleship();
     this.logs = [];
     this.finished = false;
-
-    this.generateRandomBoards();
   }
 
   public generateRandomBoards(): void {
@@ -95,7 +93,11 @@ class Game {
     return rows;
   }
 
-  public drawGrid(height: number, width: number): string {
+  public drawGrid(
+    height: number,
+    width: number,
+    info?: { heading: string; content: string[] },
+  ): string {
     const spacing = ' '.repeat(4);
     const offset = ' '.repeat(3);
     const header = Array.from({ length: width }, (_, i) => {
@@ -108,19 +110,19 @@ class Game {
       offset +
       'Me'.padEnd(width * 2 - 1, ' ') +
       spacing +
-      'Moves';
+      (info ? info.heading : 'Moves');
     const headerRow = offset + header + spacing + offset + header;
 
     const rows: string[] = [];
 
     const cRows = this.fillBoard(this.computerBoard);
     const pRows = this.fillBoard(this.playerBoard, true);
-    const lRows = this.logs.slice(-height);
+    const infoRows = (info ? info.content : this.logs).slice(-height);
     for (let i = 0; i < height; i += 1) {
       const computerRow = cRows[i];
       const playerRow = pRows[i];
-      const logRow = lRows[i] ?? '';
-      const gameRow = computerRow + spacing + playerRow + spacing + logRow;
+      const infoRow = infoRows[i] ?? '';
+      const gameRow = computerRow + spacing + playerRow + spacing + infoRow;
       rows.push(gameRow);
     }
 
@@ -192,6 +194,210 @@ class Game {
     return this.computerBoard.allCells.includes(answer.toUpperCase() as Cell);
   }
 
+  public async askShipPositionSingleCell(name: string) {
+    const { startingCell }: { startingCell: Cell | undefined } = await prompts({
+      type: 'text',
+      name: 'startingCell',
+      message: `${name}'s position: `,
+      format: (value) => value.toUpperCase(),
+      validate: (value: string) => {
+        const valueUpper = value.toUpperCase();
+        if (!/^[A-Z][0-9]{1,2}/.test(valueUpper)) {
+          return `Invalid cell \`${value}\`. Try again. Examples: a1, A1`;
+        }
+        const possibleStartingCells =
+          this.playerBoard.possibleShipStartingCells(1, Direction.HORIZONTAL);
+        if (
+          possibleStartingCells &&
+          possibleStartingCells.includes(valueUpper as Cell)
+        ) {
+          return true;
+        }
+        return `${name} can't be placed at ${value.toUpperCase()}`;
+      },
+    });
+
+    return startingCell;
+  }
+
+  public async askShipPosition(shipSize: number, name: string) {
+    if (shipSize <= 1) {
+      throw new Error('ship size must be greater than 1');
+    }
+
+    let { direction }: { direction: Direction | undefined } = await prompts({
+      type: 'toggle',
+      name: 'direction',
+      message: `${name}'s direction: `,
+      active: Direction.VERTICAL,
+      inactive: Direction.HORIZONTAL,
+      format: (value) => (value ? Direction.VERTICAL : Direction.HORIZONTAL),
+    });
+
+    // Canceled prompt
+    if (direction === undefined) {
+      return [undefined, undefined] satisfies [undefined, undefined];
+    }
+
+    const { startingCell }: { startingCell: Cell | undefined } = await prompts({
+      type: 'text',
+      name: 'startingCell',
+      message:
+        shipSize > 1 ? `${name}'s starting square: ` : `${name}'s position: `,
+      format: (value) => value.toUpperCase(),
+      validate: (value: string) => {
+        const valueUpper = value.toUpperCase();
+        if (!/^[A-Z][0-9]{1,2}/.test(valueUpper)) {
+          return `Invalid cell \`${value}\`. Try again. Examples: a1, A1`;
+        }
+        const possibleStartingCells =
+          this.playerBoard.possibleShipStartingCells(shipSize, direction);
+        if (
+          possibleStartingCells &&
+          possibleStartingCells.includes(valueUpper as Cell)
+        ) {
+          return true;
+        }
+        return `${direction.slice(0, 1).toUpperCase() + direction.slice(1)} ship can't start at ${value.toUpperCase()}`;
+      },
+    });
+
+    // Canceled prompt
+    if (startingCell === undefined) {
+      return [undefined, undefined] satisfies [undefined, undefined];
+    }
+
+    return [direction, startingCell] satisfies [
+      Direction | undefined,
+      Cell | undefined,
+    ];
+  }
+
+  public resetGame() {
+    this.playerBoard.reset();
+    this.computerBoard.reset();
+    this.logs = [];
+  }
+
+  public async askFleetType() {
+    const resp: {
+      fleet: { size: number; state: string; name: string }[] | undefined;
+    } = await prompts<'fleet'>({
+      type: 'select',
+      name: 'fleet',
+      choices: [
+        {
+          title:
+            '1 x Battleship (4), 2 x Cruiser (3), 3 x Destroyer (2), 4 x Submarine (1)',
+          value: [
+            { size: 4, state: '  Battleship: * * * *', name: 'Battleship' },
+            { size: 3, state: '  Cruiser:    * * *', name: 'Cruiser' },
+            { size: 3, state: '  Cruiser:    * * *', name: 'Cruiser' },
+            { size: 2, state: '  Destroyer:  * *', name: 'Destroyer' },
+            { size: 2, state: '  Destroyer:  * *', name: 'Destroyer' },
+            { size: 2, state: '  Destroyer:  * *', name: 'Destroyer' },
+            { size: 1, state: '  Submarine:  *', name: 'Submarine' },
+            { size: 1, state: '  Submarine:  *', name: 'Submarine' },
+            { size: 1, state: '  Submarine:  *', name: 'Submarine' },
+            { size: 1, state: '  Submarine:  *', name: 'Submarine' },
+          ] as const,
+        },
+        {
+          title:
+            '1 x Carrier (5), 1 x Battleship (4), 1 x Cruiser (3), 1 x Submarine (3), 1 x Destroyer (2)',
+          value: [
+            { size: 5, state: '  Carrier:    * * * * *', name: 'Carrier' },
+            { size: 4, state: '  Battleship: * * * *', name: 'Battleship' },
+            { size: 3, state: '  Cruiser:    * * *', name: 'Cruiser' },
+            { size: 3, state: '  Submarine:  * * *', name: 'Submarine' },
+            { size: 2, state: '  Destroyer:  * *', name: 'Destroyer' },
+          ] as const,
+        },
+        {
+          title:
+            '1 x Carrier (5), 1 x Battleship (4), 1 x Cruiser (3), 2 x Submarine (3), 2 x Destroyer (2)',
+          value: [
+            { size: 5, state: '  Carrier:    * * * * *', name: 'Carrier' },
+            { size: 4, state: '  Battleship: * * * *', name: 'Battleship' },
+            { size: 3, state: '  Cruiser:    * * *', name: 'Cruiser' },
+            { size: 3, state: '  Submarine:  * * *', name: 'Submarine' },
+            { size: 3, state: '  Submarine:  * * *', name: 'Submarine' },
+            { size: 2, state: '  Destroyer:  * *', name: 'Destroyer' },
+            { size: 2, state: '  Destroyer:  * *', name: 'Destroyer' },
+          ] as const,
+        },
+      ],
+      message: 'Select fleet: ',
+    });
+    return resp.fleet;
+  }
+
+  public async manual(): Promise<boolean> {
+    this.playerBoard.initializeBoardSize(this.height, this.width);
+    this.computerBoard.initializeBoardSize(this.height, this.width);
+    console.log(
+      this.drawGrid(this.height, this.width, { heading: '', content: [] }),
+    );
+
+    const fleet = await this.askFleetType();
+    if (!fleet) {
+      return false;
+    }
+
+    readline.moveCursor(process.stdout, 0, -this.height - 5);
+    readline.clearLine(process.stdout, 0);
+    readline.clearScreenDown(process.stdout);
+
+    this.computerBoard.randomBoard(
+      [this.height, this.width],
+      fleet.map((e) => e.size),
+    );
+
+    for (let i = 0; i < fleet.length; i += 1) {
+      const shipDetails = fleet[i];
+      if (!shipDetails) {
+        throw new Error('Cannot extract ship details');
+      }
+      let { size, name } = shipDetails;
+      shipDetails.state = '◯' + shipDetails.state.slice(1);
+      console.log(
+        this.drawGrid(this.height, this.width, {
+          heading: 'My fleet',
+          content: fleet.map((e) => e.state),
+        }),
+      );
+
+      let startingCell: Cell | undefined;
+      let direction: Direction | undefined;
+      if (size === 1) {
+        startingCell = await this.askShipPositionSingleCell(name);
+        direction = Direction.HORIZONTAL;
+      } else {
+        [direction, startingCell] = await this.askShipPosition(size, name);
+      }
+      // Canceled prompt
+      if (!direction || !startingCell) {
+        return false;
+      }
+
+      const shipCoords = this.playerBoard.generateShipCoords(
+        size,
+        startingCell,
+        direction,
+      );
+      this.playerBoard.placeShipAndBlockSurroundingCells(shipCoords);
+
+      shipDetails.state = '✔' + shipDetails.state.slice(1);
+
+      const offset = size > 1 ? 6 : 5;
+      readline.moveCursor(process.stdout, 0, -this.height - offset);
+      readline.clearLine(process.stdout, 0);
+      readline.clearScreenDown(process.stdout);
+    }
+
+    return true;
+  }
+
   public async play() {
     console.log(this.drawGrid(this.height, this.width));
 
@@ -221,6 +427,11 @@ class Game {
 
         switch (answerLower) {
           case GameCommand.MANUAL: {
+            this.resetGame();
+            const canStart = await this.manual();
+            if (!canStart) {
+              return;
+            }
             break;
           }
           case GameCommand.EXIT:
@@ -230,7 +441,7 @@ class Game {
             return;
           }
           case GameCommand.NEW: {
-            this.logs = [];
+            this.resetGame();
             this.generateRandomBoards();
             break;
           }

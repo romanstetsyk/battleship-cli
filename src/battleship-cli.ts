@@ -39,7 +39,27 @@ program
 
 program.parse(process.argv);
 
-const { ships: shipSizes, height, width } = program.opts<CliOptions>();
+const {
+  ships: shipSizes,
+  height,
+  width,
+  manual,
+  random,
+} = program.opts<CliOptions>();
 
 const game = new Game({ height, width, shipSizes });
-game.play();
+
+try {
+  if (manual) {
+    game.manual().then((canStart) => {
+      if (canStart) {
+        game.play();
+      }
+    });
+  } else if (random) {
+    game.generateRandomBoards();
+    game.play();
+  }
+} catch {
+  console.log('Something went wrong!');
+}
