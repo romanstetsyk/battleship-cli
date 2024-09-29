@@ -1,11 +1,11 @@
 import { beforeEach, describe, it } from 'node:test';
-import { parsePosIntArrayClosure } from '../src/helpers.js';
+import { parseShipSizes } from '../src/helpers.js';
 import assert from 'node:assert';
 
-describe('parsePosIntArrayClosure', () => {
-  let cl: ReturnType<typeof parsePosIntArrayClosure>;
+describe('parseShipSizes', () => {
+  let cl: ReturnType<typeof parseShipSizes>;
   beforeEach(() => {
-    cl = parsePosIntArrayClosure();
+    cl = parseShipSizes();
   });
 
   it('should ignore second arg on first call', () => {

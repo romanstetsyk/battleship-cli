@@ -1,6 +1,6 @@
 import { Option, program } from 'commander';
 import process from 'node:process';
-import { parseDimension, parsePosIntArrayClosure } from './helpers.js';
+import { parseDimension, parseShipSizes } from './helpers.js';
 import { Game } from './game.js';
 
 type CliOptions = {
@@ -33,7 +33,7 @@ program
   )
   .addOption(
     new Option('-s, --ships <numbers...>', 'Ship sizes')
-      .argParser<number[]>(parsePosIntArrayClosure())
+      .argParser<number[]>(parseShipSizes())
       .default(defaultShipSizes),
   );
 

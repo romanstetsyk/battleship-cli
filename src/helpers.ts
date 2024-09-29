@@ -57,18 +57,21 @@ export const parsePosInt = (value: string): number => {
 
 export const parseDimension = (value: string): number => {
   const parsedValue = parsePosInt(value);
-  if (parsedValue < 5 || parsedValue > 26) {
-    throw new InvalidArgumentError('Should be between 5 and 26');
+  if (parsedValue < 10 || parsedValue > 26) {
+    throw new InvalidArgumentError('Should be between 10 and 26 inclusive');
   }
   return parsedValue;
 };
 
-export const parsePosIntArrayClosure = () => {
+export const parseShipSizes = () => {
   // The first time validator is invoked
   // the `previous` arg is equal to default value
   let isFirstValue = true;
   return (value: string, previous: number[]): number[] => {
     const parsedValue = parsePosInt(value);
+    if (parsedValue > 8) {
+      throw new InvalidArgumentError('Should be between 1 and 8 inclusive');
+    }
     if (isFirstValue) {
       isFirstValue = false;
       return [parsedValue];

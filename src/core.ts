@@ -99,6 +99,12 @@ export class Battleship {
     shipSize: number,
     direction: Direction,
   ): Cell[] | null {
+    if (
+      (direction === Direction.VERTICAL && shipSize > this.height) ||
+      (direction === Direction.HORIZONTAL && shipSize > this.width)
+    ) {
+      throw new Error('Ship size is greater than board dimention');
+    }
     const arrayOfCells: Cell[] = [];
 
     const step = direction === Direction.HORIZONTAL ? this.height : 1;

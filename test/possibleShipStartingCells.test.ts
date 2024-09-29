@@ -32,7 +32,7 @@ describe('possibleShipStartingCells method', () => {
     const size = 6;
     assert.throws(
       () => board.possibleShipStartingCells(size, Direction.VERTICAL),
-      new Error(`Not enough space for a ship size ${size}`),
+      new Error(`Ship size is greater than board dimention`),
     );
   });
 
@@ -43,9 +43,9 @@ describe('possibleShipStartingCells method', () => {
       board.blockedCells.add(cell);
     });
     const size = 3;
-    assert.throws(
-      () => board.possibleShipStartingCells(size, Direction.HORIZONTAL),
-      new Error(`Not enough space for a ship size ${size}`),
+    assert.strictEqual(
+      board.possibleShipStartingCells(size, Direction.HORIZONTAL),
+      null,
     );
   });
 
@@ -79,7 +79,7 @@ describe('possibleShipStartingCells method', () => {
     board.blockedCells.add(cell1).add(cell2);
     const output = board.allCells.filter((c) => c !== cell1 && c !== cell2);
     assert.deepStrictEqual(
-      board.possibleShipStartingCells(1, Direction.VERTICAL).length,
+      board.possibleShipStartingCells(1, Direction.VERTICAL)?.length,
       output.length,
     );
   });

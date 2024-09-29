@@ -198,7 +198,7 @@ class Game {
     const { startingCell }: { startingCell: Cell | undefined } = await prompts({
       type: 'text',
       name: 'startingCell',
-      message: `${name}'s position: `,
+      message: `${name}'s position:`,
       format: (value) => value.toUpperCase(),
       validate: (value: string) => {
         const valueUpper = value.toUpperCase();
@@ -228,7 +228,7 @@ class Game {
     let { direction }: { direction: Direction | undefined } = await prompts({
       type: 'toggle',
       name: 'direction',
-      message: `${name}'s direction: `,
+      message: `${name}'s direction:`,
       active: Direction.VERTICAL,
       inactive: Direction.HORIZONTAL,
       format: (value) => (value ? Direction.VERTICAL : Direction.HORIZONTAL),
@@ -242,8 +242,7 @@ class Game {
     const { startingCell }: { startingCell: Cell | undefined } = await prompts({
       type: 'text',
       name: 'startingCell',
-      message:
-        shipSize > 1 ? `${name}'s starting square: ` : `${name}'s position: `,
+      message: `${name}'s starting square:`,
       format: (value) => value.toUpperCase(),
       validate: (value: string) => {
         const valueUpper = value.toUpperCase();
@@ -279,55 +278,95 @@ class Game {
     this.logs = [];
   }
 
+  public getShipsOptions({
+    shipTypes,
+    sizes,
+  }: {
+    shipTypes: string[];
+    sizes: number[];
+  }) {
+    const maxLength = Math.max(...shipTypes.map((e) => e.length));
+    const counts = [...sizes]
+      .sort((a, b) => b - a)
+      .reduce<Record<string, { size: number; count: number }>>((acc, size) => {
+        const shipType = shipTypes[size - 1];
+        if (!shipType) {
+          throw new Error('Ship size is bigger than array of names');
+        }
+        const existing = acc[shipType];
+        acc[shipType] = existing
+          ? { size: existing.size, count: existing.count + 1 }
+          : { size, count: 1 };
+        return acc;
+      }, {});
+
+    const title = Object.entries(counts)
+      .map(([shipType, { size, count }]) => {
+        return `${count} x ${shipType} (${size})`;
+      })
+      .join(', ');
+
+    const value = sizes.map((size) => {
+      const shipType = shipTypes[size - 1];
+      if (!shipType) {
+        throw new Error('Ship size is bigger than array of names');
+      }
+      return {
+        size,
+        state: `  ${shipType.padEnd(maxLength, ' ')}: ${'* '.repeat(size)}`,
+        name: shipType,
+      };
+    });
+    return { title, value: { value, title } };
+  }
+
   public async askFleetType() {
     const resp: {
-      fleet: { size: number; state: string; name: string }[] | undefined;
+      fleet:
+        | {
+            title: string;
+            value: { size: number; state: string; name: string }[];
+          }
+        | undefined;
     } = await prompts<'fleet'>({
       type: 'select',
       name: 'fleet',
       choices: [
         {
-          title:
-            '1 x Battleship (4), 2 x Cruiser (3), 3 x Destroyer (2), 4 x Submarine (1)',
-          value: [
-            { size: 4, state: '  Battleship: * * * *', name: 'Battleship' },
-            { size: 3, state: '  Cruiser:    * * *', name: 'Cruiser' },
-            { size: 3, state: '  Cruiser:    * * *', name: 'Cruiser' },
-            { size: 2, state: '  Destroyer:  * *', name: 'Destroyer' },
-            { size: 2, state: '  Destroyer:  * *', name: 'Destroyer' },
-            { size: 2, state: '  Destroyer:  * *', name: 'Destroyer' },
-            { size: 1, state: '  Submarine:  *', name: 'Submarine' },
-            { size: 1, state: '  Submarine:  *', name: 'Submarine' },
-            { size: 1, state: '  Submarine:  *', name: 'Submarine' },
-            { size: 1, state: '  Submarine:  *', name: 'Submarine' },
-          ] as const,
+          ...this.getShipsOptions({
+            shipTypes: [
+              'Patrol Boat',
+              'Submarine',
+              'Destroyer',
+              'Corvette',
+              'Cruiser',
+              'Battleship',
+              'Carrier',
+              'Frigate',
+            ],
+            sizes: this.shipSizes,
+          }),
         },
         {
-          title:
-            '1 x Carrier (5), 1 x Battleship (4), 1 x Cruiser (3), 1 x Submarine (3), 1 x Destroyer (2)',
-          value: [
-            { size: 5, state: '  Carrier:    * * * * *', name: 'Carrier' },
-            { size: 4, state: '  Battleship: * * * *', name: 'Battleship' },
-            { size: 3, state: '  Cruiser:    * * *', name: 'Cruiser' },
-            { size: 3, state: '  Submarine:  * * *', name: 'Submarine' },
-            { size: 2, state: '  Destroyer:  * *', name: 'Destroyer' },
-          ] as const,
+          ...this.getShipsOptions({
+            shipTypes: ['Submarine', 'Destroyer', 'Cruiser', 'Battleship'],
+            sizes: [4, 3, 3, 2, 2, 2, 1, 1, 1, 1],
+          }),
         },
         {
-          title:
-            '1 x Carrier (5), 1 x Battleship (4), 1 x Cruiser (3), 2 x Submarine (3), 2 x Destroyer (2)',
-          value: [
-            { size: 5, state: '  Carrier:    * * * * *', name: 'Carrier' },
-            { size: 4, state: '  Battleship: * * * *', name: 'Battleship' },
-            { size: 3, state: '  Cruiser:    * * *', name: 'Cruiser' },
-            { size: 3, state: '  Submarine:  * * *', name: 'Submarine' },
-            { size: 3, state: '  Submarine:  * * *', name: 'Submarine' },
-            { size: 2, state: '  Destroyer:  * *', name: 'Destroyer' },
-            { size: 2, state: '  Destroyer:  * *', name: 'Destroyer' },
-          ] as const,
+          ...this.getShipsOptions({
+            shipTypes: ['', 'Destroyer', 'Cruiser', 'Battleship', 'Carrier'],
+            sizes: [5, 4, 3, 3, 2],
+          }),
+        },
+        {
+          ...this.getShipsOptions({
+            shipTypes: ['', 'Destroyer', 'Cruiser', 'Battleship', 'Carrier'],
+            sizes: [5, 4, 3, 3, 3, 2, 2],
+          }),
         },
       ],
-      message: 'Select fleet: ',
+      message: 'Select fleet:',
     });
     return resp.fleet;
   }
@@ -339,12 +378,18 @@ class Game {
       this.drawGrid(this.height, this.width, { heading: '', content: [] }),
     );
 
-    const fleet = await this.askFleetType();
-    if (!fleet) {
+    const response = await this.askFleetType();
+    if (!response) {
       return false;
     }
 
-    readline.moveCursor(process.stdout, 0, -this.height - 5);
+    const { value: fleet, title } = response;
+
+    const questionLength = 18; // '✔ Select fleet: › '
+    const offset = Math.ceil(
+      (title.length + questionLength) / process.stdout.columns,
+    );
+    readline.moveCursor(process.stdout, 0, -this.height - 4 - offset); // num of choices
     readline.clearLine(process.stdout, 0);
     readline.clearScreenDown(process.stdout);
 
@@ -404,7 +449,7 @@ class Game {
     const qs: PromptObject = {
       type: 'text',
       name: 'cell',
-      message: 'Your move (e.g. A1 | a1): ',
+      message: 'Your move:',
       validate: (value: string) => {
         const lower = value.toLowerCase();
         if (Object.values(GameCommand).includes(lower as GameCommand)) {
@@ -413,7 +458,7 @@ class Game {
         if (this.isValidMove(value)) {
           return true;
         }
-        return `Invalid move \`${value}\`. Try again.`;
+        return `Invalid move \`${value}\`. Try again. Examples: a1, A1`;
       },
     };
 
